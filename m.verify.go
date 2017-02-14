@@ -26,6 +26,13 @@ type VerifyModel struct {
 	Rest int `json:"rest,omitempty" xorm:"not null default 10"`
 }
 
+func (v *VerifyModel) Disable() {
+	if v.Id > 0 {
+		v.Rest = 0
+		Db.ID(v.Id).Cols("rest").Update(v.Self())
+	}
+}
+
 func (v *VerifyModel) NewVerifyCode(title string) error {
 	bean := v.Self().(IVerifyModel)
 	ok, _ := Db.Where("title=?", title).Get(bean)
@@ -64,8 +71,6 @@ func (v *VerifyModel) JudgeCode(title, code string) error {
 		Db.ID(v.Id).Cols("rest").Update(bean)
 		return errors.New("验证码错误")
 	}
-	v.Rest = 0
-	Db.ID(v.Id).Cols("rest").Update(bean)
 	return nil
 }
 
@@ -88,7 +93,9 @@ func (v *VerifyModel) Bind(g ISwagRouter, self IModel) {
 	} else {
 		v.Model.Bind(g, self)
 	}
-	g.GET("/send/:title", func(c *gin.Context) {
+	g.Info("发送验证码", "测试环境默认验证码1024").Params(
+		g.PathParam("title", "手机号/邮箱"),
+	).GET("/send/:title", func(c *gin.Context) {
 		title := c.Param("title")
 		err := v.New().(IVerifyModel).NewVerifyCode(title)
 		Api(c, nil, err)

@@ -133,12 +133,18 @@ func (s *Swagger) defineProperty(define *Definition, v reflect.Value) {
 			if field.Anonymous && field.PkgPath == "" {
 				s.defineProperty(define, v.Field(i))
 			} else if !field.Anonymous && field.PkgPath == "" {
+				jsonTag := field.Tag.Get("json")
+				if jsonTag == "-" {
+					continue
+				}
 				// 如果可以读取，获取 json的键名
-				name := parseTag(field.Tag.Get("json"))
+				name := parseTag(jsonTag)
 				if name == "" {
 					name = field.Name
 				}
-				define.Properties[name] = s.Schema(v.Field(i))
+				schema := s.Schema(v.Field(i))
+				schema["description"] = field.Tag.Get("gev")
+				define.Properties[name] = schema
 			}
 		}
 	case reflect.Map:

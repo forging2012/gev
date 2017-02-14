@@ -6,7 +6,7 @@ type IItemOwnerModel interface {
 
 type ItemOwnerModel struct {
 	ItemModel `xorm:"extends"`
-	OwnerId   int `json:"owner_id,omitempty" xorm:"not null"`
+	OwnerId   int `gev:"所有者" json:"owner_id,omitempty" xorm:"not null"`
 }
 
 func (o *ItemOwnerModel) CanRead(user IUserModel) bool {
@@ -35,8 +35,7 @@ func (o *ItemOwnerModel) CanWrite(user IUserModel) bool {
 
 func (m *ItemOwnerModel) Bind(g ISwagRouter, self IModel) {
 	if self == nil {
-		m.ItemModel.Bind(g, m)
-	} else {
-		m.ItemModel.Bind(g, self)
+		self = m
 	}
+	m.ItemModel.Bind(g, self)
 }

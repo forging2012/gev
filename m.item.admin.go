@@ -41,8 +41,7 @@ func (o *ItemAdminModel) CanWrite(user IUserModel) bool {
 
 func (m *ItemAdminModel) Bind(g ISwagRouter, self IModel) {
 	if self == nil {
-		m.ItemOwnerModel.Bind(g, m)
-	} else {
-		m.ItemOwnerModel.Bind(g, self)
+		self = m
 	}
+	m.ItemOwnerModel.Bind(g, self)
 }

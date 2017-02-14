@@ -17,9 +17,13 @@ type IUserModel interface {
 
 type UserModel struct {
 	SearchModel `xorm:"extends"`
-	Nickname    string `json:"nickname,omitempty" xorm:"not null"`
-	Telphone    string `json:"telphone,omitempty" xorm:"not null"`
-	Password    string `json:"password,omitempty" xorm:"not null"`
+	Nickname    string `gev:"用户昵称" json:"nickname,omitempty" xorm:"not null"`
+	Telphone    string `gev:"电话号码" json:"telphone,omitempty" xorm:"not null"`
+	Password    string `gev:"密码" json:"password,omitempty" xorm:"not null"`
+}
+
+func (u *UserModel) TableName() string {
+	return "user"
 }
 
 // 登录返回数据结构
@@ -77,11 +81,14 @@ func (u *UserModel) EncodePwd(password string) string {
 func (u *UserModel) Bind(g ISwagRouter, self IModel) {
 	Db.Sync(new(AccessToken))
 	if self == nil {
-		u.SearchModel.Bind(g, u)
-	} else {
-		u.SearchModel.Bind(g, self)
+		self = u
 	}
-	g.POST("/login", func(c *gin.Context) {
+	u.SearchModel.Bind(g, self)
+	g.Info("登录", "在header中加入以下两项以作统计\n`X-DEVICE`:ios/android/web\n`X-UUID`: 设备唯一标识 \n登录成功后返回用户信息和token").Body(
+		map[string]interface{}{"telphone": "", "password": ""},
+	).Data(
+		&LoginData{User: self},
+	).POST("/login", func(c *gin.Context) {
 		if err := c.BindJSON(u); err != nil {
 			Err(c, 1, errors.New("JSON解析出错"))
 			return
@@ -89,15 +96,16 @@ func (u *UserModel) Bind(g ISwagRouter, self IModel) {
 		data, err := u.New().(IUserModel).Login(u.Telphone, u.Password)
 		if data != nil {
 			c.SetCookie("X-AUTH-TOKEN", data.Access.Token, token_expire, "", "", false, false)
-			data.Access.ReadContextInfo(c)
-			Db.InsertOne(data.Access)
+			data.Access.Logined(c)
 			Ok(c, data)
 		} else {
-			Err(c, 52, err)
+			Err(c, 0, err)
 		}
 	})
-	g.GET("/mine/info", func(c *gin.Context) {
-		if user, ok := c.Get("user"); ok {
+	g.Info("我的信息", "").Data(
+		self.GetDetail(),
+	).GET("/mine/info", func(c *gin.Context) {
+		if user, ok := c.Get("user"); !ok {
 			Err(c, 1255, errors.New("需要登录"))
 		} else {
 			Ok(c, user.(IUserModel).GetDetail())
@@ -111,7 +119,7 @@ func (u *UserModel) MiddleWare(c *gin.Context) {
 	if token != "" {
 		now := time.Now()
 		user := u.Self().(IModel).New()
-		ok, _ := Db.Where("id in (select user_id from access_token where token=? and expired_at<?)", token, now).Get(user)
+		ok, _ := Db.Where("id in (select user_id from access_token where token=? and expired_at>?)", token, now).Get(user)
 		if ok {
 			c.Set("user", user)
 		}

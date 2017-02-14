@@ -83,17 +83,24 @@ func (m *ItemModel) Delete(user IUserModel, id string) error {
 
 func (m *ItemModel) Bind(g ISwagRouter, self IModel) {
 	if self == nil {
-		m.SearchModel.Bind(g, m)
-	} else {
-		m.SearchModel.Bind(g, self)
+		self = m
 	}
-	g.GET("/info/:id", func(c *gin.Context) {
+	m.SearchModel.Bind(g, self)
+	g.Info("详情", "用户可以查看有读权限删除的东西").Params(
+		g.PathParam("id", "id"),
+	).Data(
+		self.GetDetail(),
+	).GET("/info/:id", func(c *gin.Context) {
 		// 获取当前登录用户
 		user, _ := c.Get("user")
 		data, err := m.New().(IItemModel).GetInfo(user.(IUserModel), c.Param("id"))
 		Api(c, data, err)
 	})
-	g.POST("/save", func(c *gin.Context) {
+	g.Info("添加/修改", "用户可以添加或修改有写权限的东西").Body(
+		self.GetBody(),
+	).Data(
+		self.GetDetail(),
+	).POST("/save", func(c *gin.Context) {
 		// 获取当前登录用户
 		user, _ := c.Get("user")
 		model := m.New().(IItemModel)
@@ -105,7 +112,9 @@ func (m *ItemModel) Bind(g ISwagRouter, self IModel) {
 		data, err := model.Save(user.(IUserModel), src)
 		Api(c, data, err)
 	})
-	g.GET("/del/:id", func(c *gin.Context) {
+	g.Info("删除", "用户可以删除有写权限的东西").Params(
+		g.PathParam("id", "id"),
+	).GET("/del/:id", func(c *gin.Context) {
 		// 获取当前登录用户
 		user, _ := c.Get("user")
 		err := m.New().(IItemModel).Delete(user.(IUserModel), c.Param("id"))

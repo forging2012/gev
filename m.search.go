@@ -1,16 +1,15 @@
 package gev
 
 import (
-	"errors"
-	"fmt"
-
 	"github.com/gin-gonic/gin"
+	"github.com/go-xorm/xorm"
 )
 
 type ISearchModel interface {
 	IModel
-	GetCondition() interface{}
-	Search(interface{}) (interface{}, error)
+	GetCondition() ISearch
+	SearchSession(session *xorm.Session, condition ISearch) error
+	Search(ISearch) (interface{}, error)
 }
 
 // M.search Entity
@@ -18,21 +17,26 @@ type SearchModel struct {
 	Model `xorm:"extends"`
 }
 
-func (m *SearchModel) GetCondition() interface{} {
+func (m *SearchModel) GetCondition() ISearch {
 	return &SearchBody{}
 }
 
-func (m *SearchModel) Search(condition interface{}) (interface{}, error) {
+func (s *SearchModel) SearchSession(session *xorm.Session, condition ISearch) error {
+	search := condition.(*SearchBody)
+	session.Where(search.Where).Cols(search.GetWhat())
+	return nil
+}
+
+func (m *SearchModel) Search(condition ISearch) (interface{}, error) {
 	bean := m.Self().(ISearchModel)
-	search, ok := condition.(*SearchBody)
-	if !ok {
-		return nil, errors.New(fmt.Sprintf("%T.Condition格式不匹配"))
-	}
-	data := make([]interface{}, search.GetSize())
+	data := make([]interface{}, condition.GetSize())
 	n := 0
-	session := Db.NewSession().Where(search.Where)
+	session := Db.NewSession()
+	defer session.Close()
+	bean.SearchSession(session, condition)
 	total, _ := session.Count(bean)
-	session.Cols(search.GetWhat()).Limit(search.GetSize(), search.GetBegin())
+	bean.SearchSession(session, condition)
+	session.Limit(condition.GetSize(), condition.GetBegin())
 	err := session.Iterate(bean, func(i int, item interface{}) error {
 		model := item.(IModel)
 		model.SetSelf(model)
@@ -40,7 +44,6 @@ func (m *SearchModel) Search(condition interface{}) (interface{}, error) {
 		n++
 		return nil
 	})
-	session.Close()
 	return &SearchData{data[:n], total}, err
 }
 
@@ -49,7 +52,7 @@ func (m *SearchModel) Bind(g ISwagRouter, self IModel) {
 		self = m
 	}
 	m.Model.Bind(g, self)
-	g.Info("搜索", "").Body(
+	g.Info("搜索", "所有人都可以查询").Body(
 		self.(ISearchModel).GetCondition(),
 	).Data(
 		NewSearchData(10, []interface{}{self.(ISearchModel).GetSearch()}),
@@ -67,33 +70,4 @@ func NewSearchData(total int64, content []interface{}) map[string]interface{} {
 type SearchData struct {
 	Content []interface{} `json:"content" xorm:"not null"`
 	Total   int64         `json:"total" xorm:"not null"`
-}
-
-type SearchPage struct {
-	Page int `json:"page"`
-	Size int `json:"size"`
-}
-
-func (s *SearchPage) GetSize() int {
-	if s.Size < 1 {
-		return 10
-	}
-	return s.Size
-}
-
-func (s *SearchPage) GetBegin() int {
-	return s.Page * s.GetSize()
-}
-
-type SearchBody struct {
-	SearchPage
-	Where string `json:"where"`
-	What  string `json:"what"`
-}
-
-func (s *SearchBody) GetWhat() string {
-	if s.What == "" {
-		return "*"
-	}
-	return s.What
 }

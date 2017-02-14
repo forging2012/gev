@@ -12,6 +12,7 @@ type IUserRegistModel interface {
 	GetRegistorBody() interface{}
 	RegistorJudge(body interface{}) error
 	Registor(body interface{}) (*LoginData, error)
+	ChangePassword(body interface{}) (*LoginData, error)
 }
 
 type UserRegistModel struct {
@@ -57,16 +58,40 @@ func (u *UserRegistModel) Registor(body interface{}) (*LoginData, error) {
 	return &LoginData{access, bean.GetDetail()}, nil
 }
 
+func (u *UserModel) ChangePassword(body interface{}) (*LoginData, error) {
+	bean := u.Self().(IUserRegistModel)
+	rbody := body.(*RegistorBody)
+	if len(rbody.Password) < 6 || len(rbody.Password) > 32 {
+		return nil, errors.New("请输入6~32位密码")
+	}
+	if err := UserVerify.New().(IVerifyModel).JudgeCode(rbody.Telphone, rbody.Code); err != nil {
+		return nil, err
+	}
+	ok, _ := Db.Where("telphone=?", rbody.Telphone).Get(bean)
+	if !ok {
+		return nil, errors.New("用户不存在")
+	}
+	u.Telphone = rbody.Telphone
+	u.Password = bean.EncodePwd(rbody.Password)
+	_, err := Db.ID(u.Id).Update(bean)
+	// 生成Token
+	access := NewAccessToken(u.Id)
+	return &LoginData{access, bean.GetDetail()}, err
+}
+
 func (u *UserRegistModel) Bind(g ISwagRouter, self IModel) {
 	if self == nil {
-		u.UserModel.Bind(g, u)
-	} else {
-		u.UserModel.Bind(g, self)
+		self = u
 	}
+	u.UserModel.Bind(g, self)
 	if UserVerify == nil {
 		log.Println("userRegistmodel,没有设置UserVerify,忽略注册模块")
 	} else {
-		g.POST("/register", func(c *gin.Context) {
+		g.Info("注册", "").Body(
+			self.(IUserRegistModel).GetRegistorBody(),
+		).Data(
+			&LoginData{User: self},
+		).POST("/register", func(c *gin.Context) {
 			user := u.New().(IUserRegistModel)
 			body := user.GetRegistorBody()
 			if err := c.BindJSON(body); err != nil {
@@ -75,13 +100,32 @@ func (u *UserRegistModel) Bind(g ISwagRouter, self IModel) {
 				data, err := user.Registor(body)
 				if data != nil {
 					c.SetCookie("X-AUTH-TOKEN", data.Access.Token, token_expire, "", "", false, false)
-					data.Access.ReadContextInfo(c)
-					Db.InsertOne(data.Access)
+					data.Access.Save(c)
 					Ok(c, data)
 				} else {
-					Err(c, 52, err)
+					Err(c, 0, err)
 				}
 			}
 		})
 	}
+	g.Info("验证码修改密码", "").Body(
+		self.(IUserRegistModel).GetRegistorBody(),
+	).Data(
+		&LoginData{User: self},
+	).POST("/change/password", func(c *gin.Context) {
+		user := u.New().(IUserRegistModel)
+		body := user.GetRegistorBody()
+		if err := c.BindJSON(body); err != nil {
+			Err(c, 1, errors.New("JSON解析出错"))
+		} else {
+			data, err := user.ChangePassword(body)
+			if data != nil {
+				c.SetCookie("X-AUTH-TOKEN", data.Access.Token, token_expire, "", "", false, false)
+				data.Access.PasswordChanged(c)
+				Ok(c, data)
+			} else {
+				Err(c, 0, err)
+			}
+		}
+	})
 }

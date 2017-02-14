@@ -31,8 +31,8 @@ type IModel interface {
 type Model struct {
 	self     IModel    `xorm:"-"`
 	Id       int       `json:"id,omitempty" xorm:"pk autoincr"`
-	CreateAt time.Time `json:"create_at,omitempty" xorm:"created"`
-	UpdateAt time.Time `json:"update_at,omitempty" xorm:"updated"`
+	CreateAt time.Time `json:"-" xorm:"created"`
+	UpdateAt time.Time `json:"-" xorm:"updated"`
 }
 
 func (m *Model) Self() Class {
