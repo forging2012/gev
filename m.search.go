@@ -8,7 +8,7 @@ import (
 type ISearchModel interface {
 	IModel
 	GetCondition() ISearch
-	SearchSession(session *xorm.Session, condition ISearch) error
+	SearchSession(session *xorm.Session, condition ISearch)
 	Search(ISearch) (interface{}, error)
 }
 
@@ -21,22 +21,20 @@ func (m *SearchModel) GetCondition() ISearch {
 	return &SearchBody{}
 }
 
-func (s *SearchModel) SearchSession(session *xorm.Session, condition ISearch) error {
+func (s *SearchModel) SearchSession(session *xorm.Session, condition ISearch) {
 	search := condition.(*SearchBody)
 	session.Where(search.Where).Cols(search.GetWhat())
-	return nil
 }
 
-func (m *SearchModel) Search(condition ISearch) (interface{}, error) {
-	bean := m.Self().(ISearchModel)
-	data := make([]interface{}, condition.GetSize())
-	n := 0
+func GetSearchData(bean IModel, condition ISearch, sessionFunc func(session *xorm.Session)) (*SearchData, error) {
 	session := Db.NewSession()
 	defer session.Close()
-	bean.SearchSession(session, condition)
+	sessionFunc(session)
 	total, _ := session.Count(bean)
-	bean.SearchSession(session, condition)
+	sessionFunc(session)
 	session.Limit(condition.GetSize(), condition.GetBegin())
+	data := make([]interface{}, condition.GetSize())
+	n := 0
 	err := session.Iterate(bean, func(i int, item interface{}) error {
 		model := item.(IModel)
 		model.SetSelf(model)
@@ -45,6 +43,13 @@ func (m *SearchModel) Search(condition ISearch) (interface{}, error) {
 		return nil
 	})
 	return &SearchData{data[:n], total}, err
+}
+
+func (m *SearchModel) Search(condition ISearch) (interface{}, error) {
+	bean := m.Self().(ISearchModel)
+	return GetSearchData(bean, condition, func(session *xorm.Session) {
+		bean.SearchSession(session, condition)
+	})
 }
 
 func (m *SearchModel) Bind(g ISwagRouter, self IModel) {
@@ -68,6 +73,6 @@ func NewSearchData(total int64, content []interface{}) map[string]interface{} {
 }
 
 type SearchData struct {
-	Content []interface{} `json:"content" xorm:"not null"`
-	Total   int64         `json:"total" xorm:"not null"`
+	Content []interface{} `json:"content" xorm:""`
+	Total   int64         `json:"total" xorm:""`
 }

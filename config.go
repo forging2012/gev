@@ -21,7 +21,7 @@ var (
 	Db, _        = xorm.NewEngine("sqlite3", "./test.db")
 	token_expire = 86400
 	UserVerify   IVerifyModel
-	Host         = "localhost:8017"
+	Host         = "www.tederen.com:8017"
 	Swag         = swagger.NewSwagger()
 	PkgPath      = ""
 )
@@ -49,5 +49,6 @@ func Run() {
 	Swag.WriteJson("api/swagger.json")
 
 	Db.ShowSQL(true)
-	App.Run(Host)
+	n := len(Host)
+	App.Run(Host[n-5:])
 }

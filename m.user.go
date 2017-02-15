@@ -17,9 +17,9 @@ type IUserModel interface {
 
 type UserModel struct {
 	SearchModel `xorm:"extends"`
-	Nickname    string `gev:"用户昵称" json:"nickname,omitempty" xorm:"not null"`
-	Telphone    string `gev:"电话号码" json:"telphone,omitempty" xorm:"not null"`
-	Password    string `gev:"密码" json:"password,omitempty" xorm:"not null"`
+	Nickname    string `gev:"用户昵称" json:"nickname,omitempty" xorm:""`
+	Telphone    string `gev:"电话号码" json:"telphone,omitempty" xorm:""`
+	Password    string `gev:"密码" json:"password,omitempty" xorm:""`
 }
 
 func (u *UserModel) TableName() string {
@@ -28,8 +28,8 @@ func (u *UserModel) TableName() string {
 
 // 登录返回数据结构
 type LoginData struct {
-	Access *AccessToken `json:"access,omitempty" xorm:"not null"`
-	User   interface{}  `json:"user,omitempty" xorm:"not null"`
+	Access *AccessToken `json:"access,omitempty" xorm:""`
+	User   interface{}  `json:"user,omitempty" xorm:""`
 }
 
 // 不返回密码
@@ -106,7 +106,7 @@ func (u *UserModel) Bind(g ISwagRouter, self IModel) {
 		self.GetDetail(),
 	).GET("/mine/info", func(c *gin.Context) {
 		if user, ok := c.Get("user"); !ok {
-			Err(c, 1255, errors.New("需要登录"))
+			NeedAuth(c)
 		} else {
 			Ok(c, user.(IUserModel).GetDetail())
 		}

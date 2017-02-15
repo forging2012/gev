@@ -1,12 +1,16 @@
 package swagger
 
-import "github.com/gin-gonic/gin"
+import (
+	"strings"
+
+	"github.com/gin-gonic/gin"
+)
 
 type ISwagRouter interface {
 	Params(params ...*Param) ISwagRouter
 	Body(body interface{}) ISwagRouter
 	Data(data interface{}) ISwagRouter
-	Info(summary, desc string) ISwagRouter
+	Info(info ...string) ISwagRouter
 	GET(route string, handler gin.HandlerFunc)
 	POST(route string, handler gin.HandlerFunc)
 	Handle(ms, route string, handler gin.HandlerFunc)
@@ -49,9 +53,12 @@ func (swr *SwagRouter) Data(data interface{}) ISwagRouter {
 	return swr
 }
 
-func (swr *SwagRouter) Info(summary, desc string) ISwagRouter {
-	swr.summary = summary
-	swr.desc = desc
+func (swr *SwagRouter) Info(info ...string) ISwagRouter {
+	if len(info) < 1 {
+		return swr
+	}
+	swr.summary = info[0]
+	swr.desc = strings.Join(info[1:], "\n")
 	return swr
 }
 

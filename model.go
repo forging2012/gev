@@ -68,4 +68,5 @@ func (m *Model) Bind(g ISwagRouter, self IModel) {
 	}
 	m.self = self
 	Db.Sync(self)
+	log.Printf("%T\n",self)
 }

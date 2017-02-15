@@ -19,9 +19,9 @@ type IFileModel interface {
 
 type FileModel struct {
 	ItemAdminModel `xorm:"extends"`
-	Ext            string `gev:"文件后缀" json:"ext,omitempty" xorm:"not null"`
-	Place          string `json:"-" xorm:"not null"`
-	Url            string `gev:"文件地址" json:"url,omitempty" xorm:"not null"`
+	Ext            string `gev:"文件后缀" json:"ext,omitempty" xorm:""`
+	Place          string `json:"-" xorm:""`
+	Url            string `gev:"文件地址" json:"url,omitempty" xorm:""`
 }
 
 func (f *FileModel) TableName() string {

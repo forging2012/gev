@@ -9,13 +9,13 @@ import (
 
 type AccessToken struct {
 	Model     `xorm:"extends"`
-	Token     string    `gev:"身份密钥" json:"token,omitempty" xorm:"not null"`
-	ExpiredAt time.Time `gev:"过期时间" json:"expired_at,omitempty" xorm:"not null"`
-	UserId    int       `json:"-" xorm:"not null"`
-	Ip        string    `json:"-" xorm:"not null"`
-	UA        string    `json:"-" xorm:"not null"`
-	Device    string    `json:"-" xorm:"not null"`
-	Uuid      string    `json:"-" xorm:"not null"`
+	Token     string    `gev:"身份密钥" json:"token,omitempty" xorm:""`
+	ExpiredAt time.Time `gev:"过期时间" json:"expired_at,omitempty" xorm:""`
+	UserId    int       `json:"-" xorm:""`
+	Ip        string    `json:"-" xorm:""`
+	UA        string    `json:"-" xorm:""`
+	Device    string    `json:"-" xorm:""`
+	Uuid      string    `json:"-" xorm:""`
 }
 
 func (a *AccessToken) ReadContextInfo(c *gin.Context) {

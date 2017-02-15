@@ -20,7 +20,7 @@ type IVerifyModel interface {
 // 验证码模型
 type VerifyModel struct {
 	Model `xorm:"extends"`
-	Title string `json:"title,omitempty" xorm:"not null"`
+	Title string `json:"title,omitempty" xorm:""`
 	Code  string `json:"code,omitempty" xorm:"unique not null"`
 	// 剩余验证次数
 	Rest int `json:"rest,omitempty" xorm:"not null default 10"`

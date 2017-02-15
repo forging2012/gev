@@ -21,9 +21,9 @@ type UserRegistModel struct {
 
 // 默认注册数据结构
 type RegistorBody struct {
-	Code     string `json:"code,omitempty" xorm:"not null"`
-	Telphone string `json:"telphone,omitempty" xorm:"not null"`
-	Password string `json:"password,omitempty" xorm:"not null"`
+	Code     string `json:"code,omitempty" xorm:""`
+	Telphone string `json:"telphone,omitempty" xorm:""`
+	Password string `json:"password,omitempty" xorm:""`
 }
 
 // 注册信息验证
