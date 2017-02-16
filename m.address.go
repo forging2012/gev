@@ -45,7 +45,7 @@ func (m *AddressModel) Bind(g ISwagRouter, self IModel) {
 	}
 	m.SearchModel.Bind(g, self)
 	// 导入地址数据
-	if n, err := Db.Limit(10).Count(self); err == nil && n < 1 {
+	if ok, err := Db.IsTableEmpty(self); err == nil && ok {
 		res, err := Db.ImportFile(PkgPath + "/address.sql")
 		log.Println(res, err)
 	}

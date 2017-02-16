@@ -97,6 +97,7 @@ func (s *Swagger) Schema(v reflect.Value) map[string]interface{} {
 			schema["$ref"] = s.Define(v)
 		}
 	case reflect.Interface, reflect.Ptr:
+		fmt.Println(v.Type().Elem())
 		if v.IsNil() {
 			schema = MapSchema
 		} else {
@@ -107,6 +108,7 @@ func (s *Swagger) Schema(v reflect.Value) map[string]interface{} {
 		if v.Len() > 0 {
 			schema["items"] = s.Schema(v.Index(0))
 		} else {
+			fmt.Println(v.Type().Elem())
 			schema["items"] = s.Schema(reflect.New(v.Type().Elem()))
 		}
 	case reflect.Bool:
