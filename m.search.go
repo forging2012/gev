@@ -26,6 +26,23 @@ func (s *SearchModel) SearchSession(session *xorm.Session, condition ISearch) {
 	session.Where(search.Where).Cols(search.GetWhat())
 }
 
+func GetSearchData2(bean interface{}, condition ISearch, sessionFunc func(session *xorm.Session)) (*SearchData, error) {
+	session := Db.NewSession()
+	defer session.Close()
+	sessionFunc(session)
+	total, _ := session.Count(bean)
+	sessionFunc(session)
+	session.Limit(condition.GetSize(), condition.GetBegin())
+	data := make([]interface{}, condition.GetSize())
+	n := 0
+	err := session.Iterate(bean, func(i int, item interface{}) error {
+		data[i] = item
+		n++
+		return nil
+	})
+	return &SearchData{data[:n], total}, err
+}
+
 func GetSearchData(bean IModel, condition ISearch, sessionFunc func(session *xorm.Session)) (*SearchData, error) {
 	session := Db.NewSession()
 	defer session.Close()

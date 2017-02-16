@@ -92,8 +92,13 @@ func (m *ItemModel) Bind(g ISwagRouter, self IModel) {
 		self.GetDetail(),
 	).GET("/info/:id", func(c *gin.Context) {
 		// 获取当前登录用户
-		user, _ := c.Get("user")
-		data, err := m.New().(IItemModel).GetInfo(user.(IUserModel), c.Param("id"))
+		var data interface{}
+		var err error
+		if user, ok := c.Get("user"); ok {
+			data, err = m.New().(IItemModel).GetInfo(user.(IUserModel), c.Param("id"))
+		} else {
+			data, err = m.New().(IItemModel).GetInfo(nil, c.Param("id"))
+		}
 		Api(c, data, err)
 	})
 	g.Info("添加/修改", "用户可以添加或修改有写权限的东西").Body(
@@ -102,22 +107,32 @@ func (m *ItemModel) Bind(g ISwagRouter, self IModel) {
 		self.GetDetail(),
 	).POST("/save", func(c *gin.Context) {
 		// 获取当前登录用户
-		user, _ := c.Get("user")
+		var data interface{}
+		var err error
+		user, ok := c.Get("user")
 		model := m.New().(IItemModel)
 		src := model.GetBody()
 		if err := c.BindJSON(src); err != nil {
 			Err(c, 1, err)
 			return
 		}
-		data, err := model.Save(user.(IUserModel), src)
+		if ok {
+			data, err = model.Save(user.(IUserModel), src)
+		} else {
+			data, err = model.Save(nil, src)
+		}
 		Api(c, data, err)
 	})
 	g.Info("删除", "用户可以删除有写权限的东西").Params(
 		g.PathParam("id", "id"),
 	).GET("/del/:id", func(c *gin.Context) {
 		// 获取当前登录用户
-		user, _ := c.Get("user")
-		err := m.New().(IItemModel).Delete(user.(IUserModel), c.Param("id"))
+		var err error
+		if user, ok := c.Get("user"); ok {
+			err = m.New().(IItemModel).Delete(user.(IUserModel), c.Param("id"))
+		} else {
+			err = m.New().(IItemModel).Delete(nil, c.Param("id"))
+		}
 		Api(c, nil, err)
 	})
 }

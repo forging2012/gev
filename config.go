@@ -1,10 +1,13 @@
 package gev
 
 import (
-	"strings"
-	// _ "github.com/go-sql-driver/mysql"
+	"log"
+	"os"
+	"regexp"
 	"runtime"
+	"strings"
 
+	"github.com/fvbock/endless"
 	"github.com/gin-gonic/gin"
 	"github.com/go-xorm/xorm"
 	"github.com/inu1255/gev/swagger"
@@ -16,14 +19,16 @@ type ISwagRouter interface {
 }
 
 var (
+	re_origin = regexp.MustCompile(`https?://`)
 	// Db, _ = xorm.NewEngine("mysql", "root:199337@/youyue")
 	App          = gin.Default()
 	Db, _        = xorm.NewEngine("sqlite3", "./test.db")
 	token_expire = 86400
 	UserVerify   IVerifyModel
-	Host         = "www.tederen.com:8017"
+	Host         = ""
 	Swag         = swagger.NewSwagger()
 	PkgPath      = ""
+	Log          = log.New(os.Stdout, "[ gev ]\t", log.Ltime|log.Lshortfile)
 )
 
 type RouterGroup gin.RouterGroup
@@ -32,8 +37,8 @@ func (r *RouterGroup) Bind(model IModel) {
 	model.Bind(Swag.Bind((*gin.RouterGroup)(r)), nil)
 }
 
-func Bind(prefix string, model IModel, handlers ...gin.HandlerFunc) {
-	pbd := Swag.Bind(App.Group(prefix, handlers...))
+func Bind(prefix string, model IModel, summary ...string) {
+	pbd := Swag.Bind(App.Group(prefix), summary...)
 	model.Bind(pbd, nil)
 }
 
@@ -44,11 +49,29 @@ func init() {
 	}
 }
 
-func Run() {
+func Cross() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		origin := c.Request.Header.Get("Origin")
+		if origin != "" {
+			c.Header("Access-Control-Allow-Origin", re_origin.ReplaceAllString(origin, ""))
+			c.Header("Access-Control-Allow-Credentials", "true")
+			c.Header("Access-Control-Allow-Headers", "x-auth-token,x-device,x-uuid,content-type")
+		}
+	}
+}
+
+func Description(info ...string) {
+	Swag.Info.Add(info...)
+}
+
+func Run(host string) {
+	if host != "" {
+		Host = host
+	}
 	Swag.Host = Host
 	Swag.WriteJson("api/swagger.json")
 
 	Db.ShowSQL(true)
-	n := len(Host)
-	App.Run(Host[n-5:])
+	AutoRestart()
+	endless.ListenAndServe(":8017", App)
 }

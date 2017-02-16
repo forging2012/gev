@@ -1,16 +1,19 @@
 package gev
 
 // 自己和管理员可以编辑
-type IItemAdminModel interface {
+type IItemRoleModel interface {
 	IItemOwnerModel
 }
 
-type ItemAdminModel struct {
+type ItemRoleModel struct {
 	ItemOwnerModel `xorm:"extends"`
 }
 
-func (o *ItemAdminModel) CanRead(user IUserModel) bool {
-	if u, ok := user.(IUserAdminModel); ok && u.IsAdmin(o.Self().(IModel)) {
+func (o *ItemRoleModel) CanRead(user IUserModel) bool {
+	if user == nil {
+		return false
+	}
+	if u, ok := user.(IUserRoleModel); ok && u.IsAdmin() {
 		return true
 	}
 	if user == nil {
@@ -22,8 +25,11 @@ func (o *ItemAdminModel) CanRead(user IUserModel) bool {
 	return false
 }
 
-func (o *ItemAdminModel) CanWrite(user IUserModel) bool {
-	if u, ok := user.(IUserAdminModel); ok && u.IsAdmin(o.Self().(IModel)) {
+func (o *ItemRoleModel) CanWrite(user IUserModel) bool {
+	if user == nil {
+		return false
+	}
+	if u, ok := user.(IUserRoleModel); ok && u.IsAdmin() {
 		return true
 	}
 	if user == nil {
@@ -39,7 +45,7 @@ func (o *ItemAdminModel) CanWrite(user IUserModel) bool {
 	return false
 }
 
-func (m *ItemAdminModel) Bind(g ISwagRouter, self IModel) {
+func (m *ItemRoleModel) Bind(g ISwagRouter, self IModel) {
 	if self == nil {
 		self = m
 	}

@@ -18,7 +18,7 @@ type IUserModel interface {
 type UserModel struct {
 	SearchModel `xorm:"extends"`
 	Nickname    string `gev:"用户昵称" json:"nickname,omitempty" xorm:""`
-	Telphone    string `gev:"电话号码" json:"telphone,omitempty" xorm:""`
+	Telphone    string `gev:"电话号码" json:"telphone,omitempty" xorm:"unique not null"`
 	Password    string `gev:"密码" json:"password,omitempty" xorm:""`
 }
 
@@ -105,9 +105,7 @@ func (u *UserModel) Bind(g ISwagRouter, self IModel) {
 	g.Info("我的信息", "").Data(
 		self.GetDetail(),
 	).GET("/mine/info", func(c *gin.Context) {
-		if user, ok := c.Get("user"); !ok {
-			NeedAuth(c)
-		} else {
+		if user, ok := NeedAuth(c); ok {
 			Ok(c, user.(IUserModel).GetDetail())
 		}
 	})

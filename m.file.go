@@ -12,16 +12,16 @@ import (
 )
 
 type IFileModel interface {
-	IItemAdminModel
+	IItemRoleModel
 	Upload(filename string, file multipart.File, user IUserModel) (interface{}, error)
 	GetUrl() string
 }
 
 type FileModel struct {
-	ItemAdminModel `xorm:"extends"`
-	Ext            string `gev:"文件后缀" json:"ext,omitempty" xorm:""`
-	Place          string `json:"-" xorm:""`
-	Url            string `gev:"文件地址" json:"url,omitempty" xorm:""`
+	ItemRoleModel `xorm:"extends"`
+	Ext           string `gev:"文件后缀" json:"ext,omitempty" xorm:""`
+	Place         string `json:"-" xorm:""`
+	Url           string `gev:"文件地址" json:"url,omitempty" xorm:""`
 }
 
 func (f *FileModel) TableName() string {
@@ -82,7 +82,7 @@ func (m *FileModel) Bind(g ISwagRouter, self IModel) {
 	if self == nil {
 		self = m
 	}
-	m.ItemAdminModel.Bind(g, self)
+	m.ItemRoleModel.Bind(g, self)
 	g.Info("上传文件", "").Data(self).Params(
 		g.FileParam("file", "文件"),
 	).POST("/upload", func(c *gin.Context) {

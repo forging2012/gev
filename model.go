@@ -67,6 +67,8 @@ func (m *Model) Bind(g ISwagRouter, self IModel) {
 		log.Fatalln("model.Bind需要 self")
 	}
 	m.self = self
-	Db.Sync(self)
-	log.Printf("%T\n",self)
+	err := Db.Sync(self)
+	if err != nil {
+		log.Printf("%T-->%v\n", self, err)
+	}
 }

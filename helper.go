@@ -1,10 +1,16 @@
 package gev
 
 import (
-	"github.com/inu1255/gohelper"
+	"unsafe"
 
 	"github.com/gin-gonic/gin"
 )
+
+func Str2bytes(s string) []byte {
+	x := (*[2]uintptr)(unsafe.Pointer(&s))
+	h := [3]uintptr{x[0], x[1], x[1]}
+	return *(*[]byte)(unsafe.Pointer(&h))
+}
 
 func Ok(c *gin.Context, data interface{}) {
 	c.IndentedJSON(200, gin.H{"code": 0, "data": data})
@@ -12,7 +18,7 @@ func Ok(c *gin.Context, data interface{}) {
 func Err(c *gin.Context, code int, err error) {
 	msg := err.Error()
 	if code == 0 {
-		table := gohelper.Str2bytes(msg)
+		table := Str2bytes(msg)
 		count := len(table)
 		if count > 32 {
 			count = 32

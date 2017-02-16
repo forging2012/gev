@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -13,6 +14,7 @@ import (
 
 var (
 	MapSchema = map[string]interface{}{"$ref": "#/definitions/.map"}
+	reg_route = regexp.MustCompile(`:(\w+)`)
 )
 
 type Swagger struct {
@@ -30,7 +32,10 @@ type Swagger struct {
 	Tags                []*Tag                   `json:"tags,omitempty"`
 }
 
-func (s *Swagger) Bind(g *gin.RouterGroup) ISwagRouter {
+func (s *Swagger) Bind(g *gin.RouterGroup, summary ...string) ISwagRouter {
+	if len(summary) > 0 {
+		s.Tags = append(s.Tags, &Tag{g.BasePath()[1:], strings.Join(summary, ";")})
+	}
 	return &SwagRouter{engine: s, group: g}
 }
 
@@ -52,6 +57,7 @@ func (s *Swagger) AddPath(basePkg, route, ms, summary, desc string, params []*Pa
 	if data != nil {
 		method.SetResponse(s.Schema(reflect.ValueOf(data)))
 	}
+	route = reg_route.ReplaceAllString(route, "{$1}")
 	ps := basePkg + route
 	if path, ok := s.Paths[ps]; ok {
 		path.SetMethod(ms, method)
@@ -101,7 +107,7 @@ func (s *Swagger) Schema(v reflect.Value) map[string]interface{} {
 		if v.Len() > 0 {
 			schema["items"] = s.Schema(v.Index(0))
 		} else {
-			schema["items"] = MapSchema
+			schema["items"] = s.Schema(reflect.New(v.Type().Elem()))
 		}
 	case reflect.Bool:
 		schema["type"] = "boolean"
@@ -137,13 +143,18 @@ func (s *Swagger) defineProperty(define *Definition, v reflect.Value) {
 				if jsonTag == "-" {
 					continue
 				}
+				gevTag := field.Tag.Get("gev")
+				if gevTag == "-" {
+					continue
+				}
+
 				// 如果可以读取，获取 json的键名
 				name := parseTag(jsonTag)
 				if name == "" {
 					name = field.Name
 				}
 				schema := s.Schema(v.Field(i))
-				schema["description"] = field.Tag.Get("gev")
+				schema["description"] = gevTag
 				define.Properties[name] = schema
 			}
 		}
