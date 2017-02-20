@@ -18,7 +18,7 @@ type IUserModel interface {
 type UserModel struct {
 	ItemRoleModel `xorm:"extends"`
 	Nickname      string `gev:"用户昵称" json:"nickname" xorm:""`
-	Telphone      string `gev:"电话号码" json:"telphone" xorm:"unique(telphone) not null"`
+	Telphone      string `gev:"电话号码" json:"telphone" xorm:"varchar(32) unique(telphone) not null"`
 	Password      string `gev:"密码" json:"password,omitempty" xorm:""`
 }
 

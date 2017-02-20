@@ -21,7 +21,7 @@ type IUserRoleModel interface {
 
 type UserRoleModel struct {
 	UserRegistModel `xorm:"extends"`
-	Role            string `gev:"用户角色" json:"role,omitempty" xorm:"unique(telphone) not null default '普通用户'"`
+	Role            string `gev:"用户角色" json:"role,omitempty" xorm:"varchar(32) unique(telphone) not null default '普通用户'"`
 }
 
 func (u *UserRoleModel) BeforeInsert() {
