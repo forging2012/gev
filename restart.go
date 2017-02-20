@@ -24,7 +24,7 @@ func AutoRestart() {
 		for {
 			select {
 			case event := <-watcher.Events:
-				if (event.Op&fsnotify.Create == fsnotify.Create) || (event.Op&fsnotify.Chmod == fsnotify.Chmod) {
+				if event.Op&fsnotify.Chmod == fsnotify.Chmod {
 					time.AfterFunc(1*time.Second, func() {
 						cmd := exec.Command("/bin/bash", "-c", `ps -ef|grep youyue|grep -v grep|awk '{print "kill -1 "$2|"/bin/bash"}'`)
 						err := cmd.Start()

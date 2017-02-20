@@ -43,6 +43,7 @@ func Bind(prefix string, model IModel, summary ...string) {
 }
 
 func init() {
+	gin.SetMode(gin.ReleaseMode)
 	_, file, _, _ := runtime.Caller(0)
 	if index := strings.LastIndex(file, "/"); index > 0 {
 		PkgPath = file[:index]
