@@ -19,7 +19,7 @@ func NewMethod(summary, desc string) *Method {
 		Tags:        make([]string, 0, 1),
 		Parameters:  make([]interface{}, 0),
 	}
-	method.SetResponse(MapSchema)
+	// method.SetResponse(MapSchema)
 	return method
 }
 

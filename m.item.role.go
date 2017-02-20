@@ -45,7 +45,6 @@ func (m *ItemRoleModel) Bind(g ISwagRouter, self IModel) {
 	if self == nil {
 		self = m
 	}
-	//
 	m.SearchModel.Bind(g, self)
 	g.Info("详情", "用户可以查看有读权限删除的东西").Params(
 		g.PathParam("id", "id"),
@@ -57,8 +56,10 @@ func (m *ItemRoleModel) Bind(g ISwagRouter, self IModel) {
 		var err error
 		if user, ok := NeedAuth(c); ok {
 			data, err = m.New().(IItemModel).GetInfo(user.(IUserModel), c.Param("id"))
+			Api(c, data, err)
+		} else {
+			NeedAuth(c)
 		}
-		Api(c, data, err)
 	})
 	g.Info("添加/修改", "用户可以添加或修改有写权限的东西").Body(
 		self.GetBody(),
@@ -76,8 +77,10 @@ func (m *ItemRoleModel) Bind(g ISwagRouter, self IModel) {
 		}
 		if user, ok := NeedAuth(c); ok {
 			data, err = model.Save(user.(IUserModel), src)
+			Api(c, data, err)
+		} else {
+			NeedAuth(c)
 		}
-		Api(c, data, err)
 	})
 	g.Info("删除", "用户可以删除有写权限的东西").Params(
 		g.PathParam("id", "id"),
@@ -86,7 +89,9 @@ func (m *ItemRoleModel) Bind(g ISwagRouter, self IModel) {
 		var err error
 		if user, ok := NeedAuth(c); ok {
 			err = m.New().(IItemModel).Delete(user.(IUserModel), c.Param("id"))
+			Api(c, nil, err)
+		} else {
+			NeedAuth(c)
 		}
-		Api(c, nil, err)
 	})
 }

@@ -12,10 +12,6 @@ type Class interface {
 	New() Class
 }
 
-type ISchemaBody interface {
-	GetData() (IModel, error)
-}
-
 // 基础数据模型
 // 父类可以通过Self()获取实例
 type IModel interface {
@@ -24,7 +20,6 @@ type IModel interface {
 	GetDetail() interface{}
 	GetSearch() interface{}
 	GetBody() ISchemaBody
-	GetId() int
 	Bind(g ISwagRouter, model IModel)
 }
 
@@ -40,6 +35,9 @@ func (m *Model) Self() Class {
 }
 func (m *Model) SetSelf(self Class) {
 	m.self = self.(IModel)
+}
+func (m *Model) IsNew() bool {
+	return m.Id < 1
 }
 func (m *Model) New() Class {
 	model := reflect.New(reflect.TypeOf(m.self).Elem()).Interface().(Class)
@@ -58,7 +56,7 @@ func (m *Model) GetBody() ISchemaBody {
 func (m *Model) GetId() int {
 	return m.Id
 }
-func (m *Model) GetData() (IModel, error) {
+func (m *Model) GetData(IUserModel) (IModel, error) {
 	return m.Self().(IModel), nil
 }
 

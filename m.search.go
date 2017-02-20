@@ -80,7 +80,11 @@ func (m *SearchModel) Bind(g ISwagRouter, self IModel) {
 		NewSearchData(10, []interface{}{self.(ISearchModel).GetSearch()}),
 	).POST("/search", func(c *gin.Context) {
 		condition := m.Self().(ISearchModel).GetCondition()
-		c.BindJSON(condition)
+		err := c.BindJSON(condition)
+		if err != nil {
+			Err(c, 1, err)
+			return
+		}
 		data, err := m.New().(ISearchModel).Search(condition)
 		Api(c, data, err)
 	})

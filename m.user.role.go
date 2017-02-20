@@ -1,6 +1,7 @@
 package gev
 
 import (
+	"errors"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -20,7 +21,7 @@ type IUserRoleModel interface {
 
 type UserRoleModel struct {
 	UserRegistModel `xorm:"extends"`
-	Role            string `gev:"用户角色" json:"role,omitempty" xorm:"not null default '普通用户'"`
+	Role            string `gev:"用户角色" json:"role,omitempty" xorm:"unique(telphone) not null default '普通用户'"`
 }
 
 func (u *UserRoleModel) BeforeInsert() {
@@ -41,6 +42,26 @@ func (u *UserRoleModel) IsAdmin() bool {
 		return true
 	}
 	return false
+}
+
+// 登录
+func (u *UserRoleModel) Login(telphone, password string) (*LoginData, error) {
+	bean := u.Self().(IUserRoleModel)
+	// 通过手机号查用户
+	ok, err := Db.Where("telphone=? and role=?", telphone, bean.GetRole()).Get(bean)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, errors.New("用户不存在")
+	}
+	// 匹配密码
+	if u.Password == bean.EncodePwd(password) {
+		// 生成Token
+		access := NewAccessToken(u.Id)
+		return &LoginData{access, bean.GetDetail()}, nil
+	}
+	return nil, errors.New("密码不正确")
 }
 
 func (u *UserRoleModel) Bind(g ISwagRouter, self IModel) {

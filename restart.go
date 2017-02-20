@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	fsnotify "gopkg.in/fsnotify.v1"
 )
@@ -23,10 +24,12 @@ func AutoRestart() {
 		for {
 			select {
 			case event := <-watcher.Events:
-				if event.Op&fsnotify.Create == fsnotify.Create {
-					cmd := exec.Command("/bin/zsh", "-c", `ps -ef|grep youyue|grep -v grep|awk '{print "kill -1 "$2|"/bin/bash"}'`)
-					err := cmd.Start()
-					Log.Println("重启中...", err)
+				if (event.Op&fsnotify.Create == fsnotify.Create) || (event.Op&fsnotify.Chmod == fsnotify.Chmod) {
+					time.AfterFunc(1*time.Second, func() {
+						cmd := exec.Command("/bin/bash", "-c", `ps -ef|grep youyue|grep -v grep|awk '{print "kill -1 "$2|"/bin/bash"}'`)
+						err := cmd.Start()
+						Log.Println("重启中...", err)
+					})
 				}
 			}
 		}

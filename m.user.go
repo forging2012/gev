@@ -10,16 +10,16 @@ import (
 )
 
 type IUserModel interface {
-	ISearchModel
+	IItemRoleModel
 	Login(telphone, password string) (*LoginData, error)
 	EncodePwd(string) string
 }
 
 type UserModel struct {
-	SearchModel `xorm:"extends"`
-	Nickname    string `gev:"用户昵称" json:"nickname,omitempty" xorm:""`
-	Telphone    string `gev:"电话号码" json:"telphone,omitempty" xorm:"unique not null"`
-	Password    string `gev:"密码" json:"password,omitempty" xorm:""`
+	ItemRoleModel `xorm:"extends"`
+	Nickname      string `gev:"用户昵称" json:"nickname" xorm:""`
+	Telphone      string `gev:"电话号码" json:"telphone" xorm:"unique(telphone) not null"`
+	Password      string `gev:"密码" json:"password,omitempty" xorm:""`
 }
 
 func (u *UserModel) TableName() string {
@@ -45,9 +45,9 @@ func (u *UserModel) GetDetail() interface{} {
 }
 
 //  save时对密码进行加密
-func (r *UserModel) GetData() (IModel, error) {
+func (r *UserModel) GetData(user IUserModel) (IModel, error) {
 	r.Password = r.EncodePwd(r.Password)
-	return r.Model.GetData()
+	return r.Model.GetData(user)
 }
 
 // 登录
@@ -83,7 +83,7 @@ func (u *UserModel) Bind(g ISwagRouter, self IModel) {
 	if self == nil {
 		self = u
 	}
-	u.SearchModel.Bind(g, self)
+	u.ItemRoleModel.Bind(g, self)
 	g.Info("登录", "在header中加入以下两项以作统计\n`X-DEVICE`:ios/android/web\n`X-UUID`: 设备唯一标识 \n登录成功后返回用户信息和token").Body(
 		map[string]interface{}{"telphone": "", "password": ""},
 	).Data(

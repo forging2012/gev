@@ -85,5 +85,5 @@ func (swr *SwagRouter) PathParam(name, desc string) *Param {
 }
 
 func (swr *SwagRouter) FileParam(name, desc string) *Param {
-	return &Param{"file", name, desc, "file", false, "form", true}
+	return &Param{"formData", name, desc, "file", false, "form", true}
 }

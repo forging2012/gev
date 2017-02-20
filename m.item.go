@@ -38,7 +38,7 @@ func (m *ItemModel) GetInfo(user IUserModel, id string) (interface{}, error) {
 	return bean.GetDetail(), err
 }
 func (m *ItemModel) Save(user IUserModel, schema ISchemaBody) (interface{}, error) {
-	bean, err := schema.GetData()
+	bean, err := schema.GetData(user)
 	if err != nil {
 		return nil, err
 	}
@@ -46,10 +46,12 @@ func (m *ItemModel) Save(user IUserModel, schema ISchemaBody) (interface{}, erro
 	if !bean.(IItemModel).CanWrite(user) {
 		return nil, errors.New("没有权限")
 	}
-	if bean.GetId() > 0 {
+	if schema.IsNew() {
+		_, err = Db.InsertOne(bean)
+	} else {
 		item := bean.New()
 		var ok bool
-		ok, err = Db.Id(bean.GetId()).Get(item)
+		ok, err = Db.Id(schema.GetId()).Get(item)
 		if !ok {
 			return nil, errors.New("不存在")
 		}
@@ -60,10 +62,8 @@ func (m *ItemModel) Save(user IUserModel, schema ISchemaBody) (interface{}, erro
 			return nil, errors.New("没有修改权限")
 		}
 		_, err = Db.ID(bean.GetId()).Update(bean)
-	} else {
-		_, err = Db.InsertOne(bean)
 	}
-	return bean, err
+	return bean.GetDetail(), err
 }
 func (m *ItemModel) Delete(user IUserModel, id string) error {
 	bean := m.Self()

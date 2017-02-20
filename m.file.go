@@ -1,7 +1,9 @@
 package gev
 
 import (
-	"io"
+	"crypto/md5"
+	"encoding/hex"
+	"io/ioutil"
 	"mime/multipart"
 	"os"
 	"strconv"
@@ -9,19 +11,21 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/inu1255/gev/libs"
 )
 
 type IFileModel interface {
 	IItemRoleModel
 	Upload(filename string, file multipart.File, user IUserModel) (interface{}, error)
-	GetUrl() string
 }
 
 type FileModel struct {
 	ItemRoleModel `xorm:"extends"`
-	Ext           string `gev:"文件后缀" json:"ext,omitempty" xorm:""`
+	Ext           string `json:"ext,omitempty" xorm:"" gev:"文件后缀"`
 	Place         string `json:"-" xorm:""`
-	Url           string `gev:"文件地址" json:"url,omitempty" xorm:""`
+	Filename      string `json:"-" xorm:"" gev:""`
+	MD5           string `json:"-" xorm:"" gev:""`
+	Url           string `json:"url" xorm:"" gev:"文件地址,需加上host,如http://www.tederen.com:8017/"`
 }
 
 func (f *FileModel) TableName() string {
@@ -36,14 +40,6 @@ func (f *FileModel) GetExt(filename string) string {
 	return ""
 }
 
-func (f *FileModel) GetUrl() string {
-	// uri := ""
-	// if len(f.Place) > 6 {
-	// 	uri = f.Place[6:]
-	// }
-	return strings.Join([]string{"http://", Host, "/", f.Place}, "")
-}
-
 func (f *FileModel) Upload(filename string, src multipart.File, user IUserModel) (interface{}, error) {
 	var err error
 	bean := f.Self().(IFileModel)
@@ -53,27 +49,31 @@ func (f *FileModel) Upload(filename string, src multipart.File, user IUserModel)
 		uid = strconv.Itoa(user.GetId())
 		f.OwnerId = user.GetId()
 	}
-	now := time.Now()
-	dir := strings.Join([]string{"upload", uid, now.Format("2006-01-02")}, "/")
+	dir := strings.Join([]string{"upload", uid}, "/")
 	err = os.MkdirAll(dir, 0755)
 
-	// 保存文件
-	f.Place = strings.Join([]string{dir, "/", now.Format("03:04:05"), "-", filename}, "")
-	dst, err := os.OpenFile(f.Place, os.O_CREATE|os.O_WRONLY, 0644)
+	bs, err := ioutil.ReadAll(src)
 	if err != nil {
 		return nil, err
 	}
-	defer dst.Close()
-	_, err = io.Copy(dst, src)
-	if err != nil {
-		return nil, err
+	h := md5.New()
+	h.Write(bs)
+	f.MD5 = hex.EncodeToString(h.Sum(nil))
+	// 保存文件
+	f.Place = strings.Join([]string{dir, "/", f.MD5}, "")
+	if _, err = os.Stat(f.Place); err == nil {
+		err = ioutil.WriteFile(f.Place, bs, 0644)
+		if err != nil {
+			return nil, err
+		}
 	}
 	//  保存文件
 	f.Ext = f.GetExt(filename)
-	f.Url = bean.GetUrl()
-	// if ok, _ := Db.Where("place=? and owner_id=?", f.Place, f.OwnerId).Get(bean); ok {
-	// 	return bean, nil
-	// }
+	f.Filename = filename
+	f.Url = f.Place
+	if ok, _ := Db.Where("place=? and owner_id=?", f.Place, f.OwnerId).Get(bean); ok {
+		return bean, nil
+	}
 	Db.InsertOne(bean)
 	return bean, nil
 }
@@ -105,6 +105,19 @@ func (m *FileModel) Bind(g ISwagRouter, self IModel) {
 			filename = strconv.FormatInt(time.Now().UnixNano(), 10)
 		}
 		// 保存文件
-		m.New().(IFileModel).Upload(filename, file, user)
+		data, err := m.New().(IFileModel).Upload(filename, file, user)
+		Api(c, data, err)
+	})
+	g.Info("导出csv文件", "post一个二维数组").Body(
+		[][]string{},
+	).POST("/export/csv", func(c *gin.Context) {
+		var tables [][]string
+		if err := c.BindJSON(&tables); err != nil {
+			Err(c, 0, err)
+			return
+		}
+		c.Header("Content-Type", "application/octet-stream")
+		c.Header("Content-Disposition", "attachment; filename=表格.csv")
+		libs.SimpleWriteExcel(c.Writer, tables)
 	})
 }

@@ -2,16 +2,17 @@ package gev
 
 import (
 	"log"
+	"net/http"
 	"os"
-	"regexp"
 	"runtime"
 	"strings"
 
 	"github.com/fvbock/endless"
 	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/xorm"
 	"github.com/inu1255/gev/swagger"
-	_ "github.com/mattn/go-sqlite3"
+	// _ "github.com/mattn/go-sqlite3"
 )
 
 type ISwagRouter interface {
@@ -19,10 +20,9 @@ type ISwagRouter interface {
 }
 
 var (
-	re_origin = regexp.MustCompile(`https?://`)
-	// Db, _ = xorm.NewEngine("mysql", "root:199337@/youyue")
-	App          = gin.Default()
-	Db, _        = xorm.NewEngine("sqlite3", "./test.db")
+	Db, _ = xorm.NewEngine("mysql", "root:199337@/youyue")
+	App   = gin.Default()
+	// Db, _        = xorm.NewEngine("sqlite3", "./test.db")
 	token_expire = 86400
 	UserVerify   IVerifyModel
 	Host         = ""
@@ -53,9 +53,12 @@ func Cross() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
 		if origin != "" {
-			c.Header("Access-Control-Allow-Origin", re_origin.ReplaceAllString(origin, ""))
+			c.Header("Access-Control-Allow-Origin", origin)
 			c.Header("Access-Control-Allow-Credentials", "true")
 			c.Header("Access-Control-Allow-Headers", "x-auth-token,x-device,x-uuid,content-type")
+			if c.Request.Method == http.MethodOptions {
+				c.AbortWithStatus(200)
+			}
 		}
 	}
 }
