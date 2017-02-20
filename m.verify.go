@@ -21,7 +21,7 @@ type IVerifyModel interface {
 type VerifyModel struct {
 	Model `xorm:"extends"`
 	Title string `json:"title,omitempty" xorm:""`
-	Code  string `json:"code,omitempty" xorm:"unique not null"`
+	Code  string `json:"code,omitempty" xorm:"not null"`
 	// 剩余验证次数
 	Rest int `json:"rest,omitempty" xorm:"not null default 10"`
 }
