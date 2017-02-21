@@ -1,7 +1,10 @@
 package gev
 
+import "errors"
+
 type IItemOwnerModel interface {
 	IItemModel
+	DeleteIds(user IUserRoleModel, ids []int) error
 }
 
 type ItemOwnerModel struct {
@@ -31,6 +34,14 @@ func (o *ItemOwnerModel) CanWrite(user IUserModel) bool {
 		return true
 	}
 	return false
+}
+
+func (i *ItemOwnerModel) DeleteIds(user IUserRoleModel, ids []int) error {
+	if len(ids) < 1 {
+		return errors.New("数组长度不能为0")
+	}
+	_, err := Db.In("id", ids).Where("owner_id=?", user.GetId()).Delete(i.Self())
+	return err
 }
 
 func (m *ItemOwnerModel) Bind(g ISwagRouter, self IModel) {

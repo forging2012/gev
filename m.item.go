@@ -43,10 +43,10 @@ func (m *ItemModel) Save(user IUserModel, schema ISchemaBody) (interface{}, erro
 		return nil, err
 	}
 	// 更新或插入
-	if !bean.(IItemModel).CanWrite(user) {
-		return nil, errors.New("没有权限")
-	}
 	if schema.IsNew() {
+		if !bean.(IItemModel).CanWrite(user) {
+			return nil, errors.New("没有权限")
+		}
 		_, err = Db.InsertOne(bean)
 	} else {
 		item := bean.New()

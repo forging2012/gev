@@ -21,7 +21,7 @@ type ISwagRouter interface {
 
 var (
 	Db, _ = xorm.NewEngine("mysql", "root:199337@/youyue")
-	App   = gin.Default()
+	App   = gin.New()
 	// Db, _        = xorm.NewEngine("sqlite3", "./test.db")
 	token_expire = 86400
 	UserVerify   IVerifyModel
@@ -44,6 +44,15 @@ func Bind(prefix string, model IModel, summary ...string) {
 
 func init() {
 	gin.SetMode(gin.ReleaseMode)
+	// if out, err := os.OpenFile("log.txt", os.O_CREATE|os.O_WRONLY, 0664); err == nil {
+	// 	App.Use(gin.LoggerWithWriter(out))
+	// 	Log = log.New(out, "[ gev ]\t", log.Ltime|log.Lshortfile)
+	// 	Db.SetLogger(xorm.NewSimpleLogger(out))
+	// } else {
+	// 	Log.Println(out)
+	// }
+	App.Use(gin.Logger())
+	App.Use(gin.Recovery())
 	_, file, _, _ := runtime.Caller(0)
 	if index := strings.LastIndex(file, "/"); index > 0 {
 		PkgPath = file[:index]

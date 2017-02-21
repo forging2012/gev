@@ -40,7 +40,6 @@
       } else {
         url = "swagger.json";
       }
-
       hljs.configure({
         highlightSizeThreshold: 5000
       });
@@ -80,7 +79,10 @@
       });
 
       window.swaggerUi.load();
-
+      if(localStorage.access_token){
+        var auth = new SwaggerClient.ApiKeyAuthorization("access_token",localStorage.access_token, "query")
+        window.swaggerUi.api.clientAuthorizations.add("xauth", auth);
+      }
       function log() {
         if ('console' in window) {
           console.log.apply(console, arguments);

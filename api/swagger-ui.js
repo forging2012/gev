@@ -22491,7 +22491,7 @@ SwaggerUi.Views.AuthView = Backbone.View.extend({
                     auth.get('value'),
                     auth.get('in')
                 );
-
+                localStorage.access_token = keyAuth.value
                 this.router.api.clientAuthorizations.add(auth.get('title'), keyAuth);
             } else if (type === 'basic') {
                 basicAuth = new SwaggerClient.PasswordAuthorization(auth.get('username'), auth.get('password'));
@@ -22506,7 +22506,7 @@ SwaggerUi.Views.AuthView = Backbone.View.extend({
 
     logoutClick: function (e) {
         e.preventDefault();
-
+        localStorage.access_token = ""
         this.authsCollectionView.collection.forEach(function (auth) {
             window.swaggerUi.api.clientAuthorizations.remove(auth.get('title'));
         });

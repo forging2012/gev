@@ -8,8 +8,8 @@ import (
 type ISearchModel interface {
 	IModel
 	GetCondition() ISearch
-	SearchSession(session *xorm.Session, condition ISearch)
-	Search(ISearch) (interface{}, error)
+	SearchSession(user IUserModel, session *xorm.Session, condition ISearch)
+	Search(user IUserModel, condition ISearch) (interface{}, error)
 }
 
 // M.search Entity
@@ -21,9 +21,8 @@ func (m *SearchModel) GetCondition() ISearch {
 	return &SearchBody{}
 }
 
-func (s *SearchModel) SearchSession(session *xorm.Session, condition ISearch) {
-	search := condition.(*SearchBody)
-	session.Where(search.Where).Cols(search.GetWhat())
+func (s *SearchModel) SearchSession(user IUserModel, session *xorm.Session, condition ISearch) {
+	condition.MakeSession(session)
 }
 
 func GetSearchData2(bean interface{}, condition ISearch, sessionFunc func(session *xorm.Session)) (*SearchData, error) {
@@ -33,6 +32,7 @@ func GetSearchData2(bean interface{}, condition ISearch, sessionFunc func(sessio
 	total, _ := session.Count(bean)
 	sessionFunc(session)
 	session.Limit(condition.GetSize(), condition.GetBegin())
+	condition.GetOrder(session)
 	data := make([]interface{}, condition.GetSize())
 	n := 0
 	err := session.Iterate(bean, func(i int, item interface{}) error {
@@ -50,6 +50,7 @@ func GetSearchData(bean IModel, condition ISearch, sessionFunc func(session *xor
 	total, _ := session.Count(bean)
 	sessionFunc(session)
 	session.Limit(condition.GetSize(), condition.GetBegin())
+	condition.GetOrder(session)
 	data := make([]interface{}, condition.GetSize())
 	n := 0
 	err := session.Iterate(bean, func(i int, item interface{}) error {
@@ -62,10 +63,10 @@ func GetSearchData(bean IModel, condition ISearch, sessionFunc func(session *xor
 	return &SearchData{data[:n], total}, err
 }
 
-func (m *SearchModel) Search(condition ISearch) (interface{}, error) {
+func (m *SearchModel) Search(user IUserModel, condition ISearch) (interface{}, error) {
 	bean := m.Self().(ISearchModel)
 	return GetSearchData(bean, condition, func(session *xorm.Session) {
-		bean.SearchSession(session, condition)
+		bean.SearchSession(user, session, condition)
 	})
 }
 
@@ -85,8 +86,13 @@ func (m *SearchModel) Bind(g ISwagRouter, self IModel) {
 			Err(c, 1, err)
 			return
 		}
-		data, err := m.New().(ISearchModel).Search(condition)
-		Api(c, data, err)
+		if user, ok := c.Get("user"); ok {
+			data, err := m.New().(ISearchModel).Search(user.(IUserModel), condition)
+			Api(c, data, err)
+		} else {
+			data, err := m.New().(ISearchModel).Search(nil, condition)
+			Api(c, data, err)
+		}
 	})
 }
 func NewSearchData(total int64, content []interface{}) map[string]interface{} {

@@ -29,7 +29,7 @@ func (a *AddressModel) GetCondition() ISearch {
 	return &SearchAddress{}
 }
 
-func (a *AddressModel) SearchSession(session *xorm.Session, condition ISearch) {
+func (a *AddressModel) SearchSession(user IUserModel, session *xorm.Session, condition ISearch) {
 	search := condition.(*SearchAddress)
 	if search.Keyword != "" {
 		session.Where("value like ?", search.Keyword+"%")

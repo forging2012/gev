@@ -28,9 +28,9 @@ func (u *UserRoleModel) BeforeInsert() {
 	u.Role = u.Self().(IUserRoleModel).GetRole()
 }
 
-func (s *UserRoleModel) SearchSession(session *xorm.Session, condition ISearch) {
+func (s *UserRoleModel) SearchSession(user IUserModel, session *xorm.Session, condition ISearch) {
 	session.Where("role=?", s.Self().(IUserRoleModel).GetRole())
-	s.UserRegistModel.SearchSession(session, condition)
+	s.UserRegistModel.SearchSession(user, session, condition)
 }
 
 func (u *UserRoleModel) GetRole() string {

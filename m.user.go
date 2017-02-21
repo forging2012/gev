@@ -26,6 +26,19 @@ func (u *UserModel) TableName() string {
 	return "user"
 }
 
+func (u *UserModel) CanRead(user IUserModel) bool {
+	if u.Id == user.GetId() {
+		return true
+	}
+	return u.ItemRoleModel.CanWrite(user)
+}
+func (u *UserModel) CanWrite(user IUserModel) bool {
+	if u.Id == user.GetId() {
+		return true
+	}
+	return u.ItemRoleModel.CanWrite(user)
+}
+
 // 登录返回数据结构
 type LoginData struct {
 	Access *AccessToken `json:"access,omitempty" xorm:""`
