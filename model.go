@@ -31,6 +31,9 @@ type Model struct {
 }
 
 func (m *Model) Self() Class {
+	// if m.self == nil {
+	// 	return m
+	// }
 	return m.self
 }
 func (m *Model) SetSelf(self Class) {
@@ -40,6 +43,9 @@ func (m *Model) IsNew() bool {
 	return m.Id < 1
 }
 func (m *Model) New() Class {
+	// if m.self == nil {
+	// 	m.self = m
+	// }
 	model := reflect.New(reflect.TypeOf(m.self).Elem()).Interface().(Class)
 	model.SetSelf(model)
 	return model

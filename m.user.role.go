@@ -27,6 +27,9 @@ type UserRoleModel struct {
 func (u *UserRoleModel) BeforeInsert() {
 	u.Role = u.Self().(IUserRoleModel).GetRole()
 }
+func (u *UserRoleModel) BeforeUpdate() {
+	u.BeforeInsert()
+}
 
 func (s *UserRoleModel) SearchSession(user IUserModel, session *xorm.Session, condition ISearch) {
 	session.Where("role=?", s.Self().(IUserRoleModel).GetRole())
@@ -62,6 +65,27 @@ func (u *UserRoleModel) Login(telphone, password string) (*LoginData, error) {
 		return &LoginData{access, bean.GetDetail()}, nil
 	}
 	return nil, errors.New("密码不正确")
+}
+
+func (u *UserRoleModel) ChangePassword(body interface{}) (*LoginData, error) {
+	bean := u.Self().(IUserRoleModel)
+	rbody := body.(*RegistorBody)
+	if len(rbody.Password) < 6 || len(rbody.Password) > 32 {
+		return nil, errors.New("请输入6~32位密码")
+	}
+	if err := UserVerify.New().(IVerifyModel).JudgeCode(rbody.Telphone, rbody.Code); err != nil {
+		return nil, err
+	}
+	ok, _ := Db.Where("telphone=? and role=?", rbody.Telphone, bean.GetRole()).Get(bean)
+	if !ok {
+		return nil, errors.New("用户不存在")
+	}
+	u.Telphone = rbody.Telphone
+	u.Password = bean.EncodePwd(rbody.Password)
+	_, err := Db.ID(u.Id).Update(bean)
+	// 生成Token
+	access := NewAccessToken(u.Id)
+	return &LoginData{access, bean.GetDetail()}, err
 }
 
 func (u *UserRoleModel) Bind(g ISwagRouter, self IModel) {

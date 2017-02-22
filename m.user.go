@@ -15,11 +15,16 @@ type IUserModel interface {
 	EncodePwd(string) string
 }
 
+type LoginBody struct {
+	Telphone string `gev:"电话号码" json:"telphone" xorm:"varchar(32) unique(telphone) not null"`
+	Password string `gev:"密码" json:"password" xorm:"varchar(64)"`
+}
+
 type UserModel struct {
 	ItemRoleModel `xorm:"extends"`
 	Nickname      string `gev:"用户昵称" json:"nickname" xorm:""`
 	Telphone      string `gev:"电话号码" json:"telphone" xorm:"varchar(32) unique(telphone) not null"`
-	Password      string `gev:"密码" json:"password,omitempty" xorm:""`
+	Password      string `gev:"密码" json:"-" xorm:""`
 }
 
 func (u *UserModel) TableName() string {
@@ -43,18 +48,6 @@ func (u *UserModel) CanWrite(user IUserModel) bool {
 type LoginData struct {
 	Access *AccessToken `json:"access,omitempty" xorm:""`
 	User   interface{}  `json:"user,omitempty" xorm:""`
-}
-
-// 不返回密码
-func (u *UserModel) GetSearch() interface{} {
-	u.Password = ""
-	return u.Model.GetSearch()
-}
-
-// 不返回密码
-func (u *UserModel) GetDetail() interface{} {
-	u.Password = ""
-	return u.Model.GetDetail()
 }
 
 //  save时对密码进行加密
@@ -102,10 +95,13 @@ func (u *UserModel) Bind(g ISwagRouter, self IModel) {
 	).Data(
 		&LoginData{User: self},
 	).POST("/login", func(c *gin.Context) {
-		if err := c.BindJSON(u); err != nil {
+		body := &LoginBody{}
+		if err := c.BindJSON(body); err != nil {
 			Err(c, 1, errors.New("JSON解析出错"))
 			return
 		}
+		u.Telphone = body.Telphone
+		u.Password = body.Password
 		data, err := u.New().(IUserModel).Login(u.Telphone, u.Password)
 		if data != nil {
 			c.SetCookie("X-AUTH-TOKEN", data.Access.Token, token_expire, "", "", false, false)

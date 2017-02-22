@@ -11,7 +11,7 @@ type IItemModel interface {
 	CanRead(user IUserModel) bool
 	CanWrite(user IUserModel) bool
 	GetInfo(user IUserModel, id string) (interface{}, error)
-	Save(user IUserModel, schema ISchemaBody) (interface{}, error)
+	Save(user IUserModel, schema ISchemaBody) (IModel, error)
 	Delete(user IUserModel, id string) error
 }
 
@@ -37,7 +37,7 @@ func (m *ItemModel) GetInfo(user IUserModel, id string) (interface{}, error) {
 	}
 	return bean.GetDetail(), err
 }
-func (m *ItemModel) Save(user IUserModel, schema ISchemaBody) (interface{}, error) {
+func (m *ItemModel) Save(user IUserModel, schema ISchemaBody) (IModel, error) {
 	bean, err := schema.GetData(user)
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func (m *ItemModel) Save(user IUserModel, schema ISchemaBody) (interface{}, erro
 		}
 		_, err = Db.ID(bean.GetId()).Update(bean)
 	}
-	return bean.GetDetail(), err
+	return bean, err
 }
 func (m *ItemModel) Delete(user IUserModel, id string) error {
 	bean := m.Self()
@@ -104,7 +104,7 @@ func (m *ItemModel) Bind(g ISwagRouter, self IModel) {
 	g.Info("添加/修改", "用户可以添加或修改有写权限的东西").Body(
 		self.GetBody(),
 	).Data(
-		self.GetDetail(),
+		self,
 	).POST("/save", func(c *gin.Context) {
 		// 获取当前登录用户
 		var data interface{}
