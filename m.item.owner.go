@@ -9,7 +9,7 @@ type IItemOwnerModel interface {
 
 type ItemOwnerModel struct {
 	ItemModel `xorm:"extends"`
-	OwnerId   int `gev:"-" json:"owner_id,omitempty" xorm:""`
+	OwnerId   int `gev:"-" json:"-" xorm:""`
 }
 
 func (o *ItemOwnerModel) CanRead(user IUserModel) bool {

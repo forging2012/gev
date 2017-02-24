@@ -13,6 +13,7 @@ type IUserModel interface {
 	IItemRoleModel
 	Login(telphone, password string) (*LoginData, error)
 	EncodePwd(string) string
+	Exist(telphone string) bool
 }
 
 type LoginBody struct {
@@ -71,7 +72,7 @@ func (u *UserModel) Login(telphone, password string) (*LoginData, error) {
 	if u.Password == bean.EncodePwd(password) {
 		// 生成Token
 		access := NewAccessToken(u.Id)
-		return &LoginData{access, bean.GetDetail()}, nil
+		return &LoginData{access, bean}, nil
 	}
 	return nil, errors.New("密码不正确")
 }
@@ -82,6 +83,14 @@ func (u *UserModel) EncodePwd(password string) string {
 	hexText := make([]byte, 32)
 	hex.Encode(hexText, h.Sum(nil))
 	return string(hexText)
+}
+
+func (this *UserModel) Exist(telphone string) bool {
+	if telphone == "" {
+		return false
+	}
+	ok, _ := Db.Where("telphone=?", telphone).Get(this.Self())
+	return ok
 }
 
 func (u *UserModel) Bind(g ISwagRouter, self IModel) {
@@ -112,10 +121,10 @@ func (u *UserModel) Bind(g ISwagRouter, self IModel) {
 		}
 	})
 	g.Info("我的信息", "").Data(
-		self.GetDetail(),
+		self.GetDetail(nil),
 	).GET("/mine/info", func(c *gin.Context) {
 		if user, ok := NeedAuth(c); ok {
-			Ok(c, user.(IUserModel).GetDetail())
+			Ok(c, user.(IUserModel).GetDetail(user.(IUserModel)))
 		}
 	})
 }

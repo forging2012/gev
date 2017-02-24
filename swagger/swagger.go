@@ -206,7 +206,7 @@ func NewSwagger() *Swagger {
 		Host:     "localhost:8017",
 		BasePath: "/",
 		Schemes:  []string{"http"},
-		Consumes: []string{"application/json", "multipart/form-data"},
+		Consumes: []string{"application/json", "multipart/form-data", "text/plain"},
 		Produces: []string{"application/json"},
 		SecurityDefinitions: map[string]*Security{
 			"xauth": &Security{

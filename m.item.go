@@ -35,7 +35,7 @@ func (m *ItemModel) GetInfo(user IUserModel, id string) (interface{}, error) {
 	if !bean.CanRead(user) {
 		return nil, errors.New("没有权限")
 	}
-	return bean.GetDetail(), err
+	return bean.GetDetail(user), err
 }
 func (m *ItemModel) Save(user IUserModel, schema ISchemaBody) (IModel, error) {
 	bean, err := schema.GetData(user)
@@ -43,7 +43,7 @@ func (m *ItemModel) Save(user IUserModel, schema ISchemaBody) (IModel, error) {
 		return nil, err
 	}
 	// 更新或插入
-	if schema.IsNew() {
+	if bean.IsNew() {
 		if !bean.(IItemModel).CanWrite(user) {
 			return nil, errors.New("没有权限")
 		}
@@ -51,7 +51,7 @@ func (m *ItemModel) Save(user IUserModel, schema ISchemaBody) (IModel, error) {
 	} else {
 		item := bean.New()
 		var ok bool
-		ok, err = Db.Id(schema.GetId()).Get(item)
+		ok, err = Db.Id(bean.GetId()).Get(item)
 		if !ok {
 			return nil, errors.New("不存在")
 		}
@@ -89,7 +89,7 @@ func (m *ItemModel) Bind(g ISwagRouter, self IModel) {
 	g.Info("详情", "用户可以查看有读权限删除的东西").Params(
 		g.PathParam("id", "id"),
 	).Data(
-		self.GetDetail(),
+		self.GetDetail(nil),
 	).GET("/info/:id", func(c *gin.Context) {
 		// 获取当前登录用户
 		var data interface{}

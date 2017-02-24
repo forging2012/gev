@@ -75,7 +75,7 @@ func (m *SearchModel) Bind(g ISwagRouter, self IModel) {
 		self = m
 	}
 	m.Model.Bind(g, self)
-	g.Info("搜索", "所有人都可以查询").Body(
+	g.Info("搜索").Body(
 		self.(ISearchModel).GetCondition(),
 	).Data(
 		NewSearchData(10, []interface{}{self.(ISearchModel).GetSearch()}),

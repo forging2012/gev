@@ -55,7 +55,7 @@ func (u *UserRegistModel) Registor(body interface{}) (*LoginData, error) {
 	Db.InsertOne(bean)
 	// 生成Token
 	access := NewAccessToken(u.Id)
-	return &LoginData{access, bean.GetDetail()}, nil
+	return &LoginData{access, bean}, nil
 }
 
 func (u *UserModel) ChangePassword(body interface{}) (*LoginData, error) {
@@ -76,7 +76,7 @@ func (u *UserModel) ChangePassword(body interface{}) (*LoginData, error) {
 	_, err := Db.ID(u.Id).Update(bean)
 	// 生成Token
 	access := NewAccessToken(u.Id)
-	return &LoginData{access, bean.GetDetail()}, err
+	return &LoginData{access, bean}, err
 }
 
 func (u *UserRegistModel) Bind(g ISwagRouter, self IModel) {

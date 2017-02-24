@@ -1,10 +1,13 @@
 package gev
 
 import (
+	"bytes"
 	"crypto/md5"
+	"encoding/base64"
 	"encoding/hex"
+	"errors"
+	"io"
 	"io/ioutil"
-	"mime/multipart"
 	"os"
 	"strconv"
 	"strings"
@@ -16,7 +19,7 @@ import (
 
 type IFileModel interface {
 	IItemRoleModel
-	Upload(filename string, file multipart.File, user IUserModel) (interface{}, error)
+	Upload(filename string, file io.Reader, user IUserModel) (interface{}, error)
 }
 
 type FileModel struct {
@@ -40,7 +43,7 @@ func (f *FileModel) GetExt(filename string) string {
 	return ""
 }
 
-func (f *FileModel) Upload(filename string, src multipart.File, user IUserModel) (interface{}, error) {
+func (f *FileModel) Upload(filename string, src io.Reader, user IUserModel) (interface{}, error) {
 	var err error
 	bean := f.Self().(IFileModel)
 	// 创建用户文件夹
@@ -61,7 +64,8 @@ func (f *FileModel) Upload(filename string, src multipart.File, user IUserModel)
 	f.MD5 = hex.EncodeToString(h.Sum(nil))
 	// 保存文件
 	f.Place = strings.Join([]string{dir, "/", f.MD5}, "")
-	if _, err = os.Stat(f.Place); err == nil {
+	if _, err = os.Stat(f.Place); err != nil {
+		Log.Println(err)
 		err = ioutil.WriteFile(f.Place, bs, 0644)
 		if err != nil {
 			return nil, err
@@ -71,8 +75,9 @@ func (f *FileModel) Upload(filename string, src multipart.File, user IUserModel)
 	f.Ext = f.GetExt(filename)
 	f.Filename = filename
 	f.Url = f.Place
-	if ok, _ := Db.Where("place=? and owner_id=?", f.Place, f.OwnerId).Get(bean); ok {
-		return bean, nil
+	file := f.New()
+	if ok, _ := Db.Where("place=? and owner_id=?", f.Place, f.OwnerId).Get(file); ok {
+		return file, nil
 	}
 	Db.InsertOne(bean)
 	return bean, nil
@@ -98,18 +103,58 @@ func (m *FileModel) Bind(g ISwagRouter, self IModel) {
 			return
 		}
 		// 文件名
-		var filename string
-		if header.Filename != "" {
-			filename = header.Filename
-		} else {
-			filename = strconv.FormatInt(time.Now().UnixNano(), 10)
+		if header.Filename == "" {
+			Err(c, 3, errors.New("缺少文件名"))
 		}
 		// 保存文件
-		data, err := m.New().(IFileModel).Upload(filename, file, user)
+		data, err := m.New().(IFileModel).Upload(header.Filename, file, user)
+		Api(c, data, err)
+	})
+	g.Info("上传一个base64文件").Data(self).Body("").Params(
+		g.QueryParam("filename", "文件名(可选)"),
+	).POST("/upload/base64", func(c *gin.Context) {
+		var user IUserModel
+		// 上传者
+		if u, ok := c.Get("user"); ok {
+			user = u.(IUserModel)
+		}
+		src, err := ioutil.ReadAll(c.Request.Body)
+		if err != nil {
+			Err(c, 1, err)
+			return
+		}
+		filename := c.Query("filename")
+		if filename == "" {
+			filename = time.Now().Format("2006-01-02 03:04:05")
+		}
+		body := Bytes2str(src)
+		index := strings.Index(body, ";base64,")
+		if index < 4 {
+			Err(c, 2, errors.New("没有找到;base64,"))
+			return
+		}
+		if body[index-4:index] == "jpeg" {
+			filename += ".jpg"
+		} else if body[index-3:index] == "png" {
+			filename += ".png"
+		} else if i := strings.LastIndex(body[:index], "/"); i >= 0 {
+			filename += "." + body[i+1:index]
+		} else {
+			Err(c, 3, errors.New(body[:index]))
+		}
+		src = src[index+8:]
+		dst := make([]byte, base64.StdEncoding.DecodedLen(len(src)))
+		n, err := base64.StdEncoding.Decode(dst, src)
+		if err != nil {
+			Err(c, 4, err)
+			return
+		}
+		Log.Println(n)
+		data, err := m.New().(IFileModel).Upload(filename, bytes.NewReader(dst), user)
 		Api(c, data, err)
 	})
 	g.Info("导出csv文件", "post一个二维数组").Body(
-		[][]string{},
+		[][]string{[]string{}},
 	).POST("/export/csv", func(c *gin.Context) {
 		var tables [][]string
 		if err := c.BindJSON(&tables); err != nil {

@@ -28,7 +28,7 @@ func (u *UserRoleModel) BeforeInsert() {
 	u.Role = u.Self().(IUserRoleModel).GetRole()
 }
 func (u *UserRoleModel) BeforeUpdate() {
-	u.BeforeInsert()
+	u.Role = ""
 }
 
 func (s *UserRoleModel) SearchSession(user IUserModel, session *xorm.Session, condition ISearch) {
@@ -62,9 +62,17 @@ func (u *UserRoleModel) Login(telphone, password string) (*LoginData, error) {
 	if u.Password == bean.EncodePwd(password) {
 		// 生成Token
 		access := NewAccessToken(u.Id)
-		return &LoginData{access, bean.GetDetail()}, nil
+		return &LoginData{access, bean}, nil
 	}
 	return nil, errors.New("密码不正确")
+}
+
+func (this *UserRoleModel) Exist(telphone string) bool {
+	if telphone == "" {
+		return false
+	}
+	ok, _ := Db.Where("telphone=? and role=?", telphone, this.Self().(IUserRoleModel).GetRole()).Get(this.Self())
+	return ok
 }
 
 func (u *UserRoleModel) ChangePassword(body interface{}) (*LoginData, error) {
@@ -85,7 +93,7 @@ func (u *UserRoleModel) ChangePassword(body interface{}) (*LoginData, error) {
 	_, err := Db.ID(u.Id).Update(bean)
 	// 生成Token
 	access := NewAccessToken(u.Id)
-	return &LoginData{access, bean.GetDetail()}, err
+	return &LoginData{access, bean}, err
 }
 
 func (u *UserRoleModel) Bind(g ISwagRouter, self IModel) {

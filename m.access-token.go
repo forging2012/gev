@@ -16,6 +16,7 @@ type AccessToken struct {
 	UA        string    `json:"-" xorm:""`
 	Device    string    `json:"-" xorm:""`
 	Uuid      string    `json:"-" xorm:""`
+	Action    string    `json:"-" xorm:""`
 }
 
 func (a *AccessToken) ReadContextInfo(c *gin.Context) {
@@ -32,6 +33,7 @@ func (a *AccessToken) Save(c *gin.Context) {
 }
 
 func (a *AccessToken) Logined(c *gin.Context) {
+	a.Action = "login"
 	a.Save(c)
 	if a.Id > 0 {
 		Db.Exec("update access_token set expired_at='1993-03-07' where id!=? and user_id=? and device=?", a.Id, a.UserId, a.Device)
@@ -39,9 +41,16 @@ func (a *AccessToken) Logined(c *gin.Context) {
 }
 
 func (a *AccessToken) PasswordChanged(c *gin.Context) {
+	a.Action = "password"
 	a.Save(c)
 	if a.Id > 0 {
 		Db.Exec("update access_token set expired_at='1993-03-07' where id!=? and user_id=?", a.Id, a.UserId)
+	}
+}
+
+func Logout(user_id int) {
+	if user_id > 0 {
+		Db.Exec("update access_token set expired_at='1993-03-07' where user_id=?", user_id)
 	}
 }
 

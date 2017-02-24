@@ -66,7 +66,7 @@ func (m *ItemRoleModel) Bind(g ISwagRouter, self IModel) {
 	g.Info("详情", "用户可以查看有读权限删除的东西").Params(
 		g.PathParam("id", "id"),
 	).Data(
-		self.GetDetail(),
+		self.GetDetail(nil),
 	).GET("/info/:id", func(c *gin.Context) {
 		// 获取当前登录用户
 		var data interface{}
@@ -79,7 +79,7 @@ func (m *ItemRoleModel) Bind(g ISwagRouter, self IModel) {
 	g.Info("添加/修改", "用户可以添加或修改有写权限的东西").Body(
 		self.GetBody(),
 	).Data(
-		self.GetDetail(),
+		self,
 	).POST("/save", func(c *gin.Context) {
 		// 获取当前登录用户
 		var data interface{}

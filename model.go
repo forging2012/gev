@@ -17,7 +17,7 @@ type Class interface {
 type IModel interface {
 	Class
 	ISchemaBody
-	GetDetail() interface{}
+	GetDetail(user IUserModel) interface{}
 	GetSearch() interface{}
 	GetBody() ISchemaBody
 	Bind(g ISwagRouter, model IModel)
@@ -50,7 +50,7 @@ func (m *Model) New() Class {
 	model.SetSelf(model)
 	return model
 }
-func (m *Model) GetDetail() interface{} {
+func (m *Model) GetDetail(user IUserModel) interface{} {
 	return m.Self()
 }
 func (m *Model) GetSearch() interface{} {
@@ -75,4 +75,9 @@ func (m *Model) Bind(g ISwagRouter, self IModel) {
 	if err != nil {
 		log.Printf("%T-->%v\n", self, err)
 	}
+}
+
+func NewModel(model IItemRoleModel) IItemRoleModel {
+	model.SetSelf(model)
+	return model
 }

@@ -12,6 +12,10 @@ func Str2bytes(s string) []byte {
 	return *(*[]byte)(unsafe.Pointer(&h))
 }
 
+func Bytes2str(b []byte) string {
+	return *(*string)(unsafe.Pointer(&b))
+}
+
 func Ok(c *gin.Context, data interface{}) {
 	c.IndentedJSON(200, gin.H{"code": 0, "data": data})
 }
@@ -27,6 +31,7 @@ func Err(c *gin.Context, code int, err error) {
 			code += int(table[i])
 		}
 	}
+	Log.Println("code:", code, "msg:", msg)
 	c.IndentedJSON(200, gin.H{"code": code, "msg": msg})
 }
 func Api(c *gin.Context, data interface{}, err error) {
