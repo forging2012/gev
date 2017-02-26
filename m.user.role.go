@@ -31,9 +31,12 @@ func (u *UserRoleModel) BeforeUpdate() {
 	u.Role = ""
 }
 
-func (s *UserRoleModel) SearchSession(user IUserModel, session *xorm.Session, condition ISearch) {
-	session.Where("role=?", s.Self().(IUserRoleModel).GetRole())
-	s.UserRegistModel.SearchSession(user, session, condition)
+func (this *UserRoleModel) Search(user IUserModel, condition ISearch) (interface{}, error) {
+	bean := this.self
+	return GetSearchData(bean, condition, func(session *xorm.Session) {
+		session.Where("role=?", this.Self().(IUserRoleModel).GetRole())
+		condition.MakeSession(session)
+	})
 }
 
 func (u *UserRoleModel) GetRole() string {

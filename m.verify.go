@@ -33,6 +33,8 @@ func (v *VerifyModel) Disable() {
 	}
 }
 
+// 发送验证码
+// title:要发送的手机号或邮箱
 func (v *VerifyModel) NewVerifyCode(title string) error {
 	bean := v.Self().(IVerifyModel)
 	ok, _ := Db.Where("title=?", title).Get(bean)

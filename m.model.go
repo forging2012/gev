@@ -76,8 +76,3 @@ func (m *Model) Bind(g ISwagRouter, self IModel) {
 		log.Printf("%T-->%v\n", self, err)
 	}
 }
-
-func NewModel(model IItemRoleModel) IItemRoleModel {
-	model.SetSelf(model)
-	return model
-}

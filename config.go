@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"runtime"
 	"strings"
 
@@ -25,9 +26,8 @@ var (
 	// Db, _        = xorm.NewEngine("sqlite3", "./test.db")
 	token_expire = 86400
 	UserVerify   IVerifyModel
-	Host         = ""
 	Swag         = swagger.NewSwagger()
-	PkgPath      = ""
+	_gev_path    = ""
 	Log          = log.New(os.Stdout, "[ gev ]\t", log.Ltime|log.Lshortfile)
 )
 
@@ -55,8 +55,25 @@ func init() {
 	App.Use(gin.Recovery())
 	_, file, _, _ := runtime.Caller(0)
 	if index := strings.LastIndex(file, "/"); index > 0 {
-		PkgPath = file[:index]
+		_gev_path = file[:index]
 	}
+	CopySwagger()
+}
+
+func CopySwagger() {
+	if info, err := os.Stat("api"); err != nil || !info.IsDir() {
+		cmd := exec.Command("cp", "-R", _gev_path+"/api", "api")
+		err := cmd.Start()
+		if err != nil {
+			Log.Println(err)
+		}
+	} else {
+		Log.Println("swagger文件夹已经存在")
+	}
+}
+
+func SetDb(driverName, dataSourceName string) {
+	Db, _ = xorm.NewEngine(driverName, dataSourceName)
 }
 
 func Cross() gin.HandlerFunc {
@@ -78,13 +95,13 @@ func Description(info ...string) {
 }
 
 func Run(host string) {
-	if host != "" {
-		Host = host
+	if host == "" {
+		host = ":8017"
 	}
-	Swag.Host = Host
 	Swag.WriteJson("api/swagger.json")
 
 	Db.ShowSQL(true)
 	AutoRestart()
-	endless.ListenAndServe(":8017", App)
+	Server := endless.NewServer(host, App)
+	Server.ListenAndServe()
 }

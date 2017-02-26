@@ -8,7 +8,6 @@ import (
 type ISearchModel interface {
 	IModel
 	GetCondition() ISearch
-	SearchSession(user IUserModel, session *xorm.Session, condition ISearch)
 	Search(user IUserModel, condition ISearch) (interface{}, error)
 }
 
@@ -17,12 +16,8 @@ type SearchModel struct {
 	Model `xorm:"extends"`
 }
 
-func (m *SearchModel) GetCondition() ISearch {
+func (this *SearchModel) GetCondition() ISearch {
 	return &SearchBody{}
-}
-
-func (s *SearchModel) SearchSession(user IUserModel, session *xorm.Session, condition ISearch) {
-	condition.MakeSession(session)
 }
 
 func GetSearchData2(bean interface{}, condition ISearch, sessionFunc func(session *xorm.Session)) (*SearchData, error) {
@@ -63,34 +58,34 @@ func GetSearchData(bean IModel, condition ISearch, sessionFunc func(session *xor
 	return &SearchData{data[:n], total}, err
 }
 
-func (m *SearchModel) Search(user IUserModel, condition ISearch) (interface{}, error) {
-	bean := m.Self().(ISearchModel)
+func (this *SearchModel) Search(user IUserModel, condition ISearch) (interface{}, error) {
+	bean := this.self
 	return GetSearchData(bean, condition, func(session *xorm.Session) {
-		bean.SearchSession(user, session, condition)
+		condition.MakeSession(session)
 	})
 }
 
-func (m *SearchModel) Bind(g ISwagRouter, self IModel) {
+func (this *SearchModel) Bind(g ISwagRouter, self IModel) {
 	if self == nil {
-		self = m
+		self = this
 	}
-	m.Model.Bind(g, self)
+	this.Model.Bind(g, self)
 	g.Info("搜索").Body(
 		self.(ISearchModel).GetCondition(),
 	).Data(
 		NewSearchData(10, []interface{}{self.(ISearchModel).GetSearch()}),
 	).POST("/search", func(c *gin.Context) {
-		condition := m.Self().(ISearchModel).GetCondition()
+		condition := this.Self().(ISearchModel).GetCondition()
 		err := c.BindJSON(condition)
 		if err != nil {
 			Err(c, 1, err)
 			return
 		}
 		if user, ok := c.Get("user"); ok {
-			data, err := m.New().(ISearchModel).Search(user.(IUserModel), condition)
+			data, err := this.New().(ISearchModel).Search(user.(IUserModel), condition)
 			Api(c, data, err)
 		} else {
-			data, err := m.New().(ISearchModel).Search(nil, condition)
+			data, err := this.New().(ISearchModel).Search(nil, condition)
 			Api(c, data, err)
 		}
 	})

@@ -203,7 +203,7 @@ func NewSwagger() *Swagger {
 	swagger := &Swagger{
 		Swagger:  "2.0",
 		Info:     Info{"1.0.0", "接口文档", "点击右上角`Authorize`切换token\n"},
-		Host:     "localhost:8017",
+		Host:     "",
 		BasePath: "/",
 		Schemes:  []string{"http"},
 		Consumes: []string{"application/json", "multipart/form-data", "text/plain"},

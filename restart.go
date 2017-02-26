@@ -3,7 +3,9 @@ package gev
 import (
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	fsnotify "gopkg.in/fsnotify.v1"
@@ -26,7 +28,7 @@ func AutoRestart() {
 			case event := <-watcher.Events:
 				if event.Op&fsnotify.Chmod == fsnotify.Chmod {
 					time.AfterFunc(1*time.Second, func() {
-						cmd := exec.Command("/bin/bash", "-c", `ps -ef|grep youyue|grep -v grep|awk '{print "kill -1 "$2|"/bin/bash"}'`)
+						cmd := exec.Command("kill", "-1", strconv.Itoa(syscall.Getpid()))
 						err := cmd.Start()
 						Log.Println("重启中...", err)
 					})

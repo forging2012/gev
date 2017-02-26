@@ -31,7 +31,7 @@ func Err(c *gin.Context, code int, err error) {
 			code += int(table[i])
 		}
 	}
-	Log.Println("code:", code, "msg:", msg)
+	Log.Println("code:\033[41;37m", code, "\033[0m msg:", msg)
 	c.IndentedJSON(200, gin.H{"code": code, "msg": msg})
 }
 func Api(c *gin.Context, data interface{}, err error) {
@@ -40,4 +40,9 @@ func Api(c *gin.Context, data interface{}, err error) {
 		return
 	}
 	Ok(c, data)
+}
+
+func NewModel(model IItemRoleModel) IItemRoleModel {
+	model.SetSelf(model)
+	return model
 }
