@@ -35,32 +35,34 @@ func GetSearchData2(bean interface{}, condition ISearch, sessionFunc func(sessio
 		n++
 		return nil
 	})
-	return &SearchData{data[:n], total}, err
+	return &SearchData{Content: data[:n], Total: total}, err
 }
 
-func GetSearchData(bean IModel, condition ISearch, sessionFunc func(session *xorm.Session)) (*SearchData, error) {
-	session := Db.NewSession()
-	defer session.Close()
-	sessionFunc(session)
-	total, _ := session.Count(bean)
-	sessionFunc(session)
-	session.Limit(condition.GetSize(), condition.GetBegin())
-	condition.GetOrder(session)
-	data := make([]interface{}, condition.GetSize())
-	n := 0
-	err := session.Iterate(bean, func(i int, item interface{}) error {
-		model := item.(IModel)
-		model.SetSelf(model)
-		data[i] = model.GetSearch()
-		n++
-		return nil
-	})
-	return &SearchData{data[:n], total}, err
+func GetSearchData(bean interface{}, user IUserModel, condition ISearch, sessionFunc func(session *xorm.Session)) (*SearchData, error) {
+	if data, ok := bean.(IData); ok {
+		session := Db.NewSession()
+		defer session.Close()
+		sessionFunc(session)
+		total, _ := session.Count(data)
+		sessionFunc(session)
+		session.Limit(condition.GetSize(), condition.GetBegin())
+		condition.GetOrder(session)
+		data := make([]interface{}, condition.GetSize())
+		n := 0
+		err := session.Iterate(data, func(i int, item interface{}) error {
+			model := item.(IData)
+			data[i] = model.GetSearch(user)
+			n++
+			return nil
+		})
+		return &SearchData{Content: data[:n], Total: total}, err
+	}
+	return GetSearchData2(bean, condition, sessionFunc)
 }
 
 func (this *SearchModel) Search(user IUserModel, condition ISearch) (interface{}, error) {
-	bean := this.self
-	return GetSearchData(bean, condition, func(session *xorm.Session) {
+	bean := this.GetData()
+	return GetSearchData(bean, user, condition, func(session *xorm.Session) {
 		condition.MakeSession(session)
 	})
 }
@@ -73,7 +75,7 @@ func (this *SearchModel) Bind(g ISwagRouter, self IModel) {
 	g.Info("搜索").Body(
 		self.(ISearchModel).GetCondition(),
 	).Data(
-		NewSearchData(10, []interface{}{self.(ISearchModel).GetSearch()}),
+		NewSearchData(10, []interface{}{self.GetData()}),
 	).POST("/search", func(c *gin.Context) {
 		condition := this.Self().(ISearchModel).GetCondition()
 		err := c.BindJSON(condition)
@@ -95,6 +97,7 @@ func NewSearchData(total int64, content []interface{}) map[string]interface{} {
 }
 
 type SearchData struct {
-	Content []interface{} `json:"content" xorm:""`
-	Total   int64         `json:"total" xorm:""`
+	Content []interface{} `json:"content" xorm:"" gev:"数据数组"`
+	Total   int64         `json:"total" xorm:"" gev:"数据总量"`
+	Ext     interface{}   `json:"ext,omitempty" xorm:"" gev:"附加数据"`
 }

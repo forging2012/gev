@@ -63,10 +63,10 @@ func (m *ItemRoleModel) Bind(g ISwagRouter, self IModel) {
 		self = m
 	}
 	m.SearchModel.Bind(g, self)
-	g.Info("详情", "用户可以查看有读权限删除的东西").Params(
+	g.Info("详情", "用户可以查看有读权限的东西").Params(
 		g.PathParam("id", "id"),
 	).Data(
-		self.GetDetail(nil),
+		self.GetData(),
 	).GET("/info/:id", func(c *gin.Context) {
 		// 获取当前登录用户
 		var data interface{}

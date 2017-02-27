@@ -24,35 +24,35 @@ type UserRoleModel struct {
 	Role            string `gev:"用户角色" json:"role,omitempty" xorm:"varchar(32) unique(telphone) not null default '普通用户'"`
 }
 
-func (u *UserRoleModel) BeforeInsert() {
-	u.Role = u.Self().(IUserRoleModel).GetRole()
+func (this *UserRoleModel) BeforeInsert() {
+	this.Role = this.Self().(IUserRoleModel).GetRole()
 }
-func (u *UserRoleModel) BeforeUpdate() {
-	u.Role = ""
+func (this *UserRoleModel) BeforeUpdate() {
+	this.Role = ""
 }
 
 func (this *UserRoleModel) Search(user IUserModel, condition ISearch) (interface{}, error) {
 	bean := this.self
-	return GetSearchData(bean, condition, func(session *xorm.Session) {
+	return GetSearchData(bean, user, condition, func(session *xorm.Session) {
 		session.Where("role=?", this.Self().(IUserRoleModel).GetRole())
 		condition.MakeSession(session)
 	})
 }
 
-func (u *UserRoleModel) GetRole() string {
-	return u.Role
+func (this *UserRoleModel) GetRole() string {
+	return this.Role
 }
 
-func (u *UserRoleModel) IsAdmin() bool {
-	if u.Role == "管理员" {
+func (this *UserRoleModel) IsAdmin() bool {
+	if this.Role == "管理员" {
 		return true
 	}
 	return false
 }
 
 // 登录
-func (u *UserRoleModel) Login(telphone, password string) (*LoginData, error) {
-	bean := u.Self().(IUserRoleModel)
+func (this *UserRoleModel) Login(telphone, password string) (*LoginData, error) {
+	bean := this.Self().(IUserRoleModel)
 	// 通过手机号查用户
 	ok, err := Db.Where("telphone=? and role=?", telphone, bean.GetRole()).Get(bean)
 	if err != nil {
@@ -62,10 +62,11 @@ func (u *UserRoleModel) Login(telphone, password string) (*LoginData, error) {
 		return nil, errors.New("用户不存在")
 	}
 	// 匹配密码
-	if u.Password == bean.EncodePwd(password) {
+	if this.Password == bean.EncodePwd(password) {
 		// 生成Token
-		access := NewAccessToken(u.Id)
-		return &LoginData{access, bean}, nil
+		access := NewAccessToken(this.Id)
+		data, _ := bean.GetInfo(bean, this.Id)
+		return &LoginData{access, data}, nil
 	}
 	return nil, errors.New("密码不正确")
 }
@@ -78,38 +79,25 @@ func (this *UserRoleModel) Exist(telphone string) bool {
 	return ok
 }
 
-func (u *UserRoleModel) ChangePassword(body interface{}) (*LoginData, error) {
-	bean := u.Self().(IUserRoleModel)
-	rbody := body.(*RegistorBody)
-	if len(rbody.Password) < 6 || len(rbody.Password) > 32 {
-		return nil, errors.New("请输入6~32位密码")
+func (this *UserRoleModel) GetByTelphone(telphone string) bool {
+	if telphone == "" {
+		return false
 	}
-	if err := UserVerify.New().(IVerifyModel).JudgeCode(rbody.Telphone, rbody.Code); err != nil {
-		return nil, err
-	}
-	ok, _ := Db.Where("telphone=? and role=?", rbody.Telphone, bean.GetRole()).Get(bean)
-	if !ok {
-		return nil, errors.New("用户不存在")
-	}
-	u.Telphone = rbody.Telphone
-	u.Password = bean.EncodePwd(rbody.Password)
-	_, err := Db.ID(u.Id).Update(bean)
-	// 生成Token
-	access := NewAccessToken(u.Id)
-	return &LoginData{access, bean}, err
+	bean := this.Self().(IUserModel)
+	ok, _ := Db.Where("telphone=? and role=?", telphone, this.Self().(IUserRoleModel).GetRole()).Get(bean)
+	return ok
 }
-
-func (u *UserRoleModel) Bind(g ISwagRouter, self IModel) {
+func (this *UserRoleModel) Bind(g ISwagRouter, self IModel) {
 	if self == nil {
-		self = u
+		self = this
 	} else {
 		// 加入用户类型类型
 		user_roles = append(user_roles, self.(IUserRoleModel))
 	}
-	u.UserRegistModel.Bind(g, self)
+	this.UserRegistModel.Bind(g, self)
 }
 
-func (u *UserRoleModel) MiddleWare(c *gin.Context) {
+func (this *UserRoleModel) MiddleWare(c *gin.Context) {
 	// 当前登录用户数据
 	token := c.Query("access_token")
 	if token != "" {

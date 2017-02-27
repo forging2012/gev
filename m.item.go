@@ -10,9 +10,9 @@ type IItemModel interface {
 	ISearchModel
 	CanRead(user IUserModel) bool
 	CanWrite(user IUserModel) bool
-	GetInfo(user IUserModel, id string) (interface{}, error)
-	Save(user IUserModel, schema ISchemaBody) (IModel, error)
-	Delete(user IUserModel, id string) error
+	GetInfo(user IUserModel, id interface{}) (interface{}, error)
+	Save(user IUserModel, schema IBody) (IModel, error)
+	Delete(user IUserModel, id interface{}) error
 }
 
 type ItemModel struct {
@@ -26,19 +26,25 @@ func (o *ItemModel) CanWrite(user IUserModel) bool {
 	return true
 }
 
-func (m *ItemModel) GetInfo(user IUserModel, id string) (interface{}, error) {
-	bean := m.Self().(IItemModel)
-	ok, err := Db.Id(id).Get(bean)
+func (m *ItemModel) GetInfo(user IUserModel, id interface{}) (interface{}, error) {
+	data := m.Self().(IModel).GetData()
+	ok, err := Db.Id(id).Get(data)
 	if !ok {
 		return nil, errors.New("不存在")
 	}
-	if !bean.CanRead(user) {
-		return nil, errors.New("没有权限")
+	if bean, ok := data.(IData); ok {
+		return bean.GetDetail(user), err
 	}
-	return bean.GetDetail(user), err
+	if bean, ok := data.(IItemModel); ok {
+		if !bean.CanRead(user) {
+			return nil, errors.New("没有权限")
+		}
+		return bean, err
+	}
+	return data, nil
 }
-func (m *ItemModel) Save(user IUserModel, schema ISchemaBody) (IModel, error) {
-	bean, err := schema.GetData(user)
+func (m *ItemModel) Save(user IUserModel, schema IBody) (IModel, error) {
+	bean, err := schema.GetBean(user)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +71,7 @@ func (m *ItemModel) Save(user IUserModel, schema ISchemaBody) (IModel, error) {
 	}
 	return bean, err
 }
-func (m *ItemModel) Delete(user IUserModel, id string) error {
+func (m *ItemModel) Delete(user IUserModel, id interface{}) error {
 	bean := m.Self()
 	ok, err := Db.Id(id).Get(bean)
 	if !ok {
@@ -86,10 +92,10 @@ func (m *ItemModel) Bind(g ISwagRouter, self IModel) {
 		self = m
 	}
 	m.SearchModel.Bind(g, self)
-	g.Info("详情", "用户可以查看有读权限删除的东西").Params(
+	g.Info("详情", "用户可以查看有读权限的东西").Params(
 		g.PathParam("id", "id"),
 	).Data(
-		self.GetDetail(nil),
+		self.GetData(),
 	).GET("/info/:id", func(c *gin.Context) {
 		// 获取当前登录用户
 		var data interface{}

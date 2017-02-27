@@ -16,61 +16,62 @@ type Class interface {
 // 父类可以通过Self()获取实例
 type IModel interface {
 	Class
-	ISchemaBody
-	GetDetail(user IUserModel) interface{}
-	GetSearch() interface{}
-	GetBody() ISchemaBody
+	GetId() int
+	IsNew() bool
+	GetBody() IBody
+	GetData() interface{}
 	Bind(g ISwagRouter, model IModel)
 }
 
 type Model struct {
 	self     IModel    `xorm:"-"`
 	Id       int       `json:"id,omitempty" xorm:"pk autoincr"`
-	CreateAt time.Time `json:"-" xorm:"created"`
+	CreateAt time.Time `json:"create_at,omitempty" xorm:"created"`
 	UpdateAt time.Time `json:"-" xorm:"updated"`
 }
 
-func (m *Model) Self() Class {
-	// if m.self == nil {
+// Class 接口
+func (this *Model) Self() Class {
+	// if this.self == nil {
 	// 	return m
 	// }
-	return m.self
+	return this.self
 }
-func (m *Model) SetSelf(self Class) {
-	m.self = self.(IModel)
+func (this *Model) SetSelf(self Class) {
+	this.self = self.(IModel)
 }
-func (m *Model) IsNew() bool {
-	return m.Id < 1
-}
-func (m *Model) New() Class {
-	// if m.self == nil {
-	// 	m.self = m
+func (this *Model) New() Class {
+	// if this.self == nil {
+	// 	this.self = m
 	// }
-	model := reflect.New(reflect.TypeOf(m.self).Elem()).Interface().(Class)
+	model := reflect.New(reflect.TypeOf(this.self).Elem()).Interface().(Class)
 	model.SetSelf(model)
 	return model
 }
-func (m *Model) GetDetail(user IUserModel) interface{} {
-	return m.Self()
+
+func (this *Model) GetId() int {
+	return this.Id
 }
-func (m *Model) GetSearch() interface{} {
-	return m.Self()
+func (this *Model) IsNew() bool {
+	return this.Id < 1
 }
-func (m *Model) GetBody() ISchemaBody {
-	return m.Self().(ISchemaBody)
+func (this *Model) GetBody() IBody {
+	return this.Self().(IBody)
 }
-func (m *Model) GetId() int {
-	return m.Id
-}
-func (m *Model) GetData(IUserModel) (IModel, error) {
-	return m.Self().(IModel), nil
+func (this *Model) GetData() interface{} {
+	return this.self
 }
 
-func (m *Model) Bind(g ISwagRouter, self IModel) {
+// IBody 接口
+func (this *Model) GetBean(IUserModel) (IModel, error) {
+	return this.Self().(IModel), nil
+}
+
+func (this *Model) Bind(g ISwagRouter, self IModel) {
 	if self == nil {
 		log.Fatalln("model.Bind需要 self")
 	}
-	m.self = self
+	this.self = self
 	err := Db.Sync(self)
 	if err != nil {
 		log.Printf("%T-->%v\n", self, err)

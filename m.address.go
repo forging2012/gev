@@ -28,15 +28,17 @@ func (a *AddressModel) TableName() string {
 func (a *AddressModel) GetCondition() ISearch {
 	return &SearchAddress{}
 }
-
-func (a *AddressModel) SearchSession(user IUserModel, session *xorm.Session, condition ISearch) {
-	search := condition.(*SearchAddress)
-	if search.Keyword != "" {
-		session.Where("value like ?", search.Keyword+"%")
-	}
-	if search.ParentId != 0 {
-		session.Where("parent_id=?", search.ParentId)
-	}
+func (a *AddressModel) Search(user IUserModel, condition ISearch) (interface{}, error) {
+	bean := &AddressModel{}
+	return GetSearchData2(bean, condition, func(session *xorm.Session) {
+		search := condition.(*SearchAddress)
+		if search.Keyword != "" {
+			session.Where("value like ?", search.Keyword+"%")
+		}
+		if search.ParentId != 0 {
+			session.Where("parent_id=?", search.ParentId)
+		}
+	})
 }
 
 func (m *AddressModel) Bind(g ISwagRouter, self IModel) {

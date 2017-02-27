@@ -2,8 +2,8 @@ package gev
 
 import "errors"
 
-type ISchemaBody interface {
-	GetData(user IUserModel) (IModel, error)
+type IBody interface {
+	GetBean(user IUserModel) (IModel, error)
 	GetId() int
 	IsNew() bool
 }
@@ -20,7 +20,7 @@ func (m *ModelBody) GetId() int {
 	return m.Id
 }
 
-func (m *ModelBody) GetData(user IUserModel) (IModel, error) {
+func (m *ModelBody) GetBean(user IUserModel) (IModel, error) {
 	data := &Model{}
 	data.Id = m.Id
 	return data, nil
@@ -33,7 +33,7 @@ type UserModelBody struct {
 	Nickname string `gev:"用户昵称" json:"nickname" xorm:""`
 }
 
-func (b *UserModelBody) GetData(user IUserModel) (IModel, error) {
+func (b *UserModelBody) GetBean(user IUserModel) (IModel, error) {
 	data := &UserModel{}
 	if b.IsNew() {
 		if role, ok := user.(IUserRoleModel); ok && role.IsAdmin() {
@@ -46,7 +46,7 @@ func (b *UserModelBody) GetData(user IUserModel) (IModel, error) {
 			return nil, errors.New("需要id")
 		}
 	}
-	model, err := b.ModelBody.GetData(user)
+	model, err := b.ModelBody.GetBean(user)
 	data.Model = *(model.(*Model))
 	if err != nil {
 		return nil, err
