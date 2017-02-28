@@ -3,7 +3,7 @@ package gev
 import "errors"
 
 type IBody interface {
-	GetBean(user IUserModel) (IModel, error)
+	CopyTo(user IUserModel, data interface{}) error
 	GetId() int
 	IsNew() bool
 }
@@ -20,10 +20,10 @@ func (m *ModelBody) GetId() int {
 	return m.Id
 }
 
-func (m *ModelBody) GetBean(user IUserModel) (IModel, error) {
-	data := &Model{}
+func (m *ModelBody) CopyTo(user IUserModel, bean interface{}) error {
+	data := bean.(*Model)
 	data.Id = m.Id
-	return data, nil
+	return nil
 }
 
 type UserModelBody struct {
@@ -33,24 +33,19 @@ type UserModelBody struct {
 	Nickname string `gev:"用户昵称" json:"nickname" xorm:""`
 }
 
-func (b *UserModelBody) GetBean(user IUserModel) (IModel, error) {
-	data := &UserModel{}
-	if b.IsNew() {
+func (this *UserModelBody) CopyTo(user IUserModel, bean interface{}) error {
+	data := bean.(*UserModel)
+	if this.IsNew() {
 		if role, ok := user.(IUserRoleModel); ok && role.IsAdmin() {
-			if b.Telphone == "" || b.Password == "" {
-				return nil, errors.New("账号/密码不能为空")
+			if this.Telphone == "" || this.Password == "" {
+				return errors.New("账号/密码不能为空")
 			}
-			data.Telphone = b.Telphone
-			data.Password = data.EncodePwd(b.Password)
+			data.Telphone = this.Telphone
+			data.Password = data.EncodePwd(this.Password)
 		} else {
-			return nil, errors.New("需要id")
+			return errors.New("需要id")
 		}
 	}
-	model, err := b.ModelBody.GetBean(user)
-	data.Model = *(model.(*Model))
-	if err != nil {
-		return nil, err
-	}
-	data.Nickname = b.Nickname
-	return data, nil
+	data.Nickname = this.Nickname
+	return this.ModelBody.CopyTo(user, &data.Model)
 }

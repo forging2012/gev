@@ -28,24 +28,25 @@ func (o *ItemModel) CanWrite(user IUserModel) bool {
 
 func (m *ItemModel) GetInfo(user IUserModel, id interface{}) (interface{}, error) {
 	data := m.Self().(IModel).GetData()
-	ok, err := Db.Id(id).Get(data)
+	ok, err := Db.Table(m.Self()).Id(id).Get(data)
+	if err != nil {
+		return nil, err
+	}
 	if !ok {
 		return nil, errors.New("不存在")
 	}
-	if bean, ok := data.(IData); ok {
-		return bean.GetDetail(user), err
+	if bean, ok := data.(IItemModel); ok && !bean.CanRead(user) {
+		return nil, errors.New("没有权限")
 	}
-	if bean, ok := data.(IItemModel); ok {
-		if !bean.CanRead(user) {
-			return nil, errors.New("没有权限")
-		}
-		return bean, err
+	if bean, ok := data.(IDataDetail); ok {
+		return bean.GetDetail(user), err
 	}
 	return data, nil
 }
 func (m *ItemModel) Save(user IUserModel, schema IBody) (IModel, error) {
-	bean, err := schema.GetBean(user)
-	if err != nil {
+	bean := m.New().(IModel)
+	var err error
+	if err = schema.CopyTo(user, bean); err != nil {
 		return nil, err
 	}
 	// 更新或插入

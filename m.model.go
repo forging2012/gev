@@ -63,8 +63,10 @@ func (this *Model) GetData() interface{} {
 }
 
 // IBody 接口
-func (this *Model) GetBean(IUserModel) (IModel, error) {
-	return this.Self().(IModel), nil
+func (this *Model) CopyTo(user IUserModel, bean interface{}) error {
+	data := bean.(*Model)
+	data.Id = this.Id
+	return nil
 }
 
 func (this *Model) Bind(g ISwagRouter, self IModel) {

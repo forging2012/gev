@@ -35,7 +35,7 @@ func (this *UserRoleModel) Search(user IUserModel, condition ISearch) (interface
 	bean := this.self
 	return GetSearchData(bean, user, condition, func(session *xorm.Session) {
 		session.Where("role=?", this.Self().(IUserRoleModel).GetRole())
-		condition.MakeSession(session)
+		condition.MakeSession(user, session)
 	})
 }
 

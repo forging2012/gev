@@ -9,9 +9,10 @@ import (
 type ISearch interface {
 	GetBegin() int
 	GetSize() int
+	SetDefaultOrder(o string)
 	GetOrder(session *xorm.Session)
 	GetOrderDefault(session *xorm.Session, default_order string)
-	MakeSession(session *xorm.Session)
+	MakeSession(user IUserModel, session *xorm.Session)
 }
 
 // 分页查询
@@ -21,20 +22,26 @@ type SearchPage struct {
 	OrderBy string `json:"order_by,omitempty" gev:"排序规则:-id"`
 }
 
-func (s *SearchPage) GetSize() int {
-	if s.Size < 1 {
+func (this *SearchPage) GetSize() int {
+	if this.Size < 1 {
 		return 10
 	}
-	return s.Size
+	return this.Size
 }
 
-func (s *SearchPage) GetBegin() int {
-	return s.Page * s.GetSize()
+func (this *SearchPage) GetBegin() int {
+	return this.Page * this.GetSize()
 }
 
-func (s *SearchPage) GetOrder(session *xorm.Session) {
-	if s.OrderBy != "" {
-		orders := strings.Split(s.OrderBy, ",")
+func (this *SearchPage) SetDefaultOrder(o string) {
+	if this.OrderBy == "" {
+		this.OrderBy = o
+	}
+}
+
+func (this *SearchPage) GetOrder(session *xorm.Session) {
+	if this.OrderBy != "" {
+		orders := strings.Split(this.OrderBy, ",")
 		for _, item := range orders {
 			if item != "" {
 				if item[:1] == "-" && item[:1] != "" {
@@ -47,9 +54,9 @@ func (s *SearchPage) GetOrder(session *xorm.Session) {
 	}
 }
 
-func (s *SearchPage) GetOrderDefault(session *xorm.Session, default_order string) {
-	if s.OrderBy != "" {
-		default_order = s.OrderBy
+func (this *SearchPage) GetOrderDefault(session *xorm.Session, default_order string) {
+	if this.OrderBy != "" {
+		default_order = this.OrderBy
 	}
 	if default_order != "" {
 		orders := strings.Split(default_order, ",")
@@ -65,7 +72,7 @@ func (s *SearchPage) GetOrderDefault(session *xorm.Session, default_order string
 	}
 }
 
-func (s *SearchPage) MakeSession(session *xorm.Session) {
+func (this *SearchPage) MakeSession(user IUserModel, session *xorm.Session) {
 }
 
 // 通用查询
@@ -75,15 +82,15 @@ type SearchBody struct {
 	What  string `json:"what" gev:"查询条件 name='abc' and telphone='xxx'"`
 }
 
-func (s *SearchBody) GetWhat() string {
-	if s.What == "" {
+func (this *SearchBody) GetWhat() string {
+	if this.What == "" {
 		return "*"
 	}
-	return s.What
+	return this.What
 }
 
-func (s *SearchBody) MakeSession(session *xorm.Session) {
-	session.Where(s.Where).Cols(s.GetWhat())
+func (this *SearchBody) MakeSession(user IUserModel, session *xorm.Session) {
+	session.Where(this.Where).Cols(this.GetWhat())
 }
 
 type SearchKeyword struct {
@@ -91,12 +98,12 @@ type SearchKeyword struct {
 	Keyword string `json:"keyword,omitempty" gev:"关键词"`
 }
 
-func (s *SearchKeyword) GetWordLike() string {
-	return WordLike(s.Keyword)
+func (this *SearchKeyword) GetWordLike() string {
+	return WordLike(this.Keyword)
 }
 
-func (s *SearchKeyword) GetCharLike() string {
-	return CharLike(s.Keyword)
+func (this *SearchKeyword) GetCharLike() string {
+	return CharLike(this.Keyword)
 }
 
 // 查找地地

@@ -49,9 +49,10 @@ func (this *UserModel) CanWrite(user IUserModel) bool {
 }
 
 //  save时对密码进行加密
-func (this *UserModel) GetBean(user IUserModel) (IModel, error) {
-	this.Password = this.EncodePwd(this.Password)
-	return this.Model.GetBean(user)
+func (this *UserModel) CopyTo(user IUserModel, bean interface{}) error {
+	data := bean.(*UserModel)
+	data.Password = this.Self().(IUserModel).EncodePwd(this.Password)
+	return nil
 }
 
 func (this *UserModel) EncodePwd(password string) string {

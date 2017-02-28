@@ -39,7 +39,7 @@ func GetSearchData2(bean interface{}, condition ISearch, sessionFunc func(sessio
 }
 
 func GetSearchData(bean interface{}, user IUserModel, condition ISearch, sessionFunc func(session *xorm.Session)) (*SearchData, error) {
-	if data, ok := bean.(IData); ok {
+	if data, ok := bean.(IDataSearch); ok {
 		session := Db.NewSession()
 		defer session.Close()
 		sessionFunc(session)
@@ -49,8 +49,8 @@ func GetSearchData(bean interface{}, user IUserModel, condition ISearch, session
 		condition.GetOrder(session)
 		data := make([]interface{}, condition.GetSize())
 		n := 0
-		err := session.Iterate(data, func(i int, item interface{}) error {
-			model := item.(IData)
+		err := session.Iterate(bean, func(i int, item interface{}) error {
+			model := item.(IDataSearch)
 			data[i] = model.GetSearch(user)
 			n++
 			return nil
@@ -63,7 +63,7 @@ func GetSearchData(bean interface{}, user IUserModel, condition ISearch, session
 func (this *SearchModel) Search(user IUserModel, condition ISearch) (interface{}, error) {
 	bean := this.GetData()
 	return GetSearchData(bean, user, condition, func(session *xorm.Session) {
-		condition.MakeSession(session)
+		condition.MakeSession(user, session)
 	})
 }
 

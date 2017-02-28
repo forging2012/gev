@@ -2,9 +2,16 @@ package gev
 
 import "time"
 
-type IData interface {
-	GetDetail(user IUserModel) interface{}
+type IDataSearch interface {
 	GetSearch(user IUserModel) interface{}
+}
+type IDataDetail interface {
+	GetDetail(user IUserModel) interface{}
+}
+
+type IData interface {
+	IDataDetail
+	IDataSearch
 }
 
 type ModelData struct {
