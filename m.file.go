@@ -163,6 +163,18 @@ func (m *FileModel) Bind(g ISwagRouter, self IModel) {
 		}
 		c.Header("Content-Type", "application/octet-stream")
 		c.Header("Content-Disposition", "attachment; filename=表格.csv")
+		libs.SimpleWriteCsv(c.Writer, tables)
+	})
+	g.Info("导出xlsx文件", "post一个二维数组").Body(
+		[][]string{[]string{}},
+	).POST("/export/xlsx", func(c *gin.Context) {
+		var tables [][]string
+		if err := c.BindJSON(&tables); err != nil {
+			Err(c, 0, err)
+			return
+		}
+		c.Header("Content-Type", "application/octet-stream")
+		c.Header("Content-Disposition", "attachment; filename=表格.xlsx")
 		libs.SimpleWriteExcel(c.Writer, tables)
 	})
 }

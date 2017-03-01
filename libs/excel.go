@@ -40,6 +40,31 @@ func SimpleReadExcel(r io.Reader) ([][]string, error) {
 }
 
 func SimpleWriteExcel(f io.Writer, table [][]string) error {
+	var file *xlsx.File
+	var sheet *xlsx.Sheet
+	var row *xlsx.Row
+	var cell *xlsx.Cell
+	var err error
+
+	file = xlsx.NewFile()
+	sheet, err = file.AddSheet("Sheet1")
+	if err != nil {
+		return err
+	}
+	for _, item := range table {
+		row = sheet.AddRow()
+		for _, col := range item {
+			cell = row.AddCell()
+			cell.Value = col
+		}
+	}
+	if err = file.Write(f); err != nil {
+		return err
+	}
+	return nil
+}
+
+func SimpleWriteCsv(f io.Writer, table [][]string) error {
 	_, err := f.Write([]byte("\xEF\xBB\xBF")) // 写入UTF-8 BOM
 	if err != nil {
 		return err

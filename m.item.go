@@ -28,7 +28,7 @@ func (o *ItemModel) CanWrite(user IUserModel) bool {
 
 func (m *ItemModel) GetInfo(user IUserModel, id interface{}) (interface{}, error) {
 	data := m.Self().(IModel).GetData()
-	ok, err := Db.Table(m.Self()).Id(id).Get(data)
+	ok, err := Db.Table(m.Self()).Where("id=?", id).Get(data)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (m *ItemModel) Delete(user IUserModel, id interface{}) error {
 	if !bean.(IItemModel).CanWrite(user) {
 		return errors.New("没有权限")
 	}
-	_, err = Db.ID(m.Id).Delete(bean)
+	_, err = Db.ID(id).Delete(bean.New())
 	return err
 }
 
