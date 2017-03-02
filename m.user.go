@@ -185,7 +185,7 @@ func (this *UserModel) Bind(g ISwagRouter, self IModel) {
 	).GET("/mine/info", func(c *gin.Context) {
 		if user, ok := NeedAuth(c); ok {
 			data := user.(IUserModel).GetData()
-			if bean, ok := data.(IData); ok {
+			if bean, ok := data.(IDataDetail); ok {
 				Ok(c, bean.GetDetail(user.(IUserModel)))
 				return
 			}
