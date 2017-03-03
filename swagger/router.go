@@ -30,60 +30,74 @@ type SwagRouter struct {
 	desc    string
 }
 
-func (swr *SwagRouter) clear() {
-	swr.params = nil
-	swr.body = nil
-	swr.data = nil
-	swr.summary = ""
-	swr.desc = ""
+func (this *SwagRouter) clear() {
+	this.params = nil
+	this.body = nil
+	this.data = nil
+	this.summary = ""
+	this.desc = ""
 }
 
-func (swr *SwagRouter) Params(ps ...*Param) ISwagRouter {
-	swr.params = ps
-	return swr
+func (this *SwagRouter) Params(ps ...*Param) ISwagRouter {
+	this.params = ps
+	return this
 }
 
-func (swr *SwagRouter) Body(body interface{}) ISwagRouter {
-	swr.body = body
-	return swr
+func (this *SwagRouter) Body(body interface{}) ISwagRouter {
+	this.body = body
+	return this
 }
 
-func (swr *SwagRouter) Data(data interface{}) ISwagRouter {
-	swr.data = data
-	return swr
+func (this *SwagRouter) Data(data interface{}) ISwagRouter {
+	this.data = data
+	return this
 }
 
-func (swr *SwagRouter) Info(info ...string) ISwagRouter {
+func (this *SwagRouter) Info(info ...string) ISwagRouter {
 	if len(info) < 1 {
-		return swr
+		return this
 	}
-	swr.summary = info[0]
-	swr.desc = strings.Join(info[1:], "\n")
-	return swr
+	this.summary = info[0]
+	this.desc = strings.Join(info[1:], "\n")
+	return this
 }
 
-func (swr *SwagRouter) Handle(ms, route string, handler gin.HandlerFunc) {
-	swr.engine.AddPath(swr.group.BasePath(), route, ms, swr.summary, swr.desc, swr.params, swr.body, swr.data)
-	swr.group.Handle(ms, route, handler)
-	swr.clear()
+func (this *SwagRouter) Handle(ms, route string, handler gin.HandlerFunc) {
+	this.engine.AddPath(this.group.BasePath(), route, ms, this.summary, this.desc, this.params, this.body, this.data)
+	this.group.Handle(ms, route, handler)
+	this.clear()
 }
 
-func (swr *SwagRouter) GET(route string, handler gin.HandlerFunc) {
-	swr.Handle("GET", route, handler)
+func (this *SwagRouter) GET(route string, handler gin.HandlerFunc) {
+	this.Handle("GET", route, handler)
 }
 
-func (swr *SwagRouter) POST(route string, handler gin.HandlerFunc) {
-	swr.Handle("POST", route, handler)
+func (this *SwagRouter) POST(route string, handler gin.HandlerFunc) {
+	// if this.body != nil {
+	// 	New := this.body.New
+	// 	this.Handle("POST", route, func(c *gin.Context) {
+	// 		body := New()
+	// 		if err := c.BindJSON(body); err != nil {
+	// 			c.Set("body", body)
+	// 			handler(c)
+	// 		} else {
+	// 			c.Set("error", err)
+	// 		}
+	// 	})
+	// } else {
+	// 	this.Handle("POST", route, handler)
+	// }
+	this.Handle("POST", route, handler)
 }
 
-func (swr *SwagRouter) QueryParam(name, desc string) *Param {
+func (this *SwagRouter) QueryParam(name, desc string) *Param {
 	return &Param{"query", name, desc, "string", false, "", false}
 }
 
-func (swr *SwagRouter) PathParam(name, desc string) *Param {
+func (this *SwagRouter) PathParam(name, desc string) *Param {
 	return &Param{"path", name, desc, "string", true, "", false}
 }
 
-func (swr *SwagRouter) FileParam(name, desc string) *Param {
+func (this *SwagRouter) FileParam(name, desc string) *Param {
 	return &Param{"formData", name, desc, "file", false, "form", true}
 }
