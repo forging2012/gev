@@ -51,6 +51,8 @@ func (this *SearchPage) GetOrder(session *xorm.Session) {
 				}
 			}
 		}
+	} else {
+		session.Desc("id")
 	}
 }
 
