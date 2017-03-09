@@ -21,7 +21,7 @@ type ISwagRouter interface {
 }
 
 var (
-	Db, _ = xorm.NewEngine("mysql", "root:199337@/youyue?parseTime=true&loc=Local")
+	Db, _ = xorm.NewEngine("mysql", "root:199337@/youyue?parseTime=true&loc=Asia%2FShanghai")
 	App   = gin.New()
 	// Db, _        = xorm.NewEngine("sqlite3", "./test.db")
 	token_expire = 86400
