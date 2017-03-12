@@ -16,11 +16,11 @@ type Class interface {
 // 父类可以通过Self()获取实例
 type IModel interface {
 	Class
+	IBind
 	GetId() int
 	IsNew() bool
 	GetBody() IBody
 	GetData() interface{}
-	Bind(g ISwagRouter, model IModel)
 }
 
 type Model struct {

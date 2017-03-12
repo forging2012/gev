@@ -20,6 +20,10 @@ type ISwagRouter interface {
 	swagger.ISwagRouter
 }
 
+type IBind interface {
+	Bind(g ISwagRouter, model IModel)
+}
+
 var (
 	Db, _ = xorm.NewEngine("mysql", "root:199337@/youyue?parseTime=true&loc=Local")
 	App   = gin.New()
@@ -33,11 +37,11 @@ var (
 
 type RouterGroup gin.RouterGroup
 
-func (r *RouterGroup) Bind(model IModel) {
+func (r *RouterGroup) Bind(model IBind) {
 	model.Bind(Swag.Bind((*gin.RouterGroup)(r)), nil)
 }
 
-func Bind(prefix string, model IModel, summary ...string) {
+func Bind(prefix string, model IBind, summary ...string) {
 	pbd := Swag.Bind(App.Group(prefix), summary...)
 	model.Bind(pbd, nil)
 }
