@@ -9,8 +9,8 @@ import (
 
 type AccessToken struct {
 	Model     `xorm:"extends"`
-	Token     string    `gev:"身份密钥" json:"token,omitempty" xorm:""`
-	ExpiredAt time.Time `gev:"过期时间" json:"expired_at,omitempty" xorm:""`
+	Token     string    `gev:"身份密钥" json:"token,omitempty" xorm:"index"`
+	ExpiredAt time.Time `gev:"过期时间" json:"expired_at,omitempty" xorm:"index"`
 	UserId    int       `json:"-" xorm:""`
 	Ip        string    `json:"-" xorm:""`
 	UA        string    `json:"-" xorm:""`

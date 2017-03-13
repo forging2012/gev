@@ -105,8 +105,10 @@ func (this *UserRoleModel) MiddleWare(c *gin.Context) {
 		user := &UserRoleModel{}
 		ok, _ := Db.Cols("id", "role").Where("id in (select user_id from access_token where token=? and expired_at>?)", token, now).Get(user)
 		if ok {
+			// Log.Println(len(user_roles))
 			// 判断登录者类型
 			for _, item := range user_roles {
+				// Log.Println(item.GetRole())
 				if user.Role == item.GetRole() {
 					bean := item.New()
 					Db.ID(user.Id).Get(bean)

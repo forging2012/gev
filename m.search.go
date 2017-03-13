@@ -27,7 +27,7 @@ func GetSearchData2(bean interface{}, condition ISearch, sessionFunc func(sessio
 	total, _ := session.Count(bean)
 	sessionFunc(session)
 	session.Limit(condition.GetSize(), condition.GetBegin())
-	condition.GetOrder(session)
+	condition.GetOrderDefault(session, "-id")
 	data := make([]interface{}, condition.GetSize())
 	n := 0
 	err := session.Iterate(bean, func(i int, item interface{}) error {
@@ -46,7 +46,7 @@ func GetSearchData(bean interface{}, user IUserModel, condition ISearch, session
 		total, _ := session.Count(data)
 		sessionFunc(session)
 		session.Limit(condition.GetSize(), condition.GetBegin())
-		condition.GetOrder(session)
+		condition.GetOrderDefault(session, "-id")
 		data := make([]interface{}, condition.GetSize())
 		n := 0
 		err := session.Iterate(bean, func(i int, item interface{}) error {
