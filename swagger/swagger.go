@@ -1,4 +1,4 @@
-package swagger
+package core
 
 import (
 	"encoding"
@@ -8,8 +8,6 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
-
-	"github.com/gin-gonic/gin"
 )
 
 var (
@@ -30,13 +28,6 @@ type Swagger struct {
 	Paths               map[string]Path          `json:"paths,omitempty"`
 	Definitions         map[string]*Definition   `json:"definitions,omitempty"`
 	Tags                []*Tag                   `json:"tags,omitempty"`
-}
-
-func (s *Swagger) Bind(g *gin.RouterGroup, summary ...string) ISwagRouter {
-	if len(summary) > 0 {
-		s.Tags = append(s.Tags, &Tag{g.BasePath()[1:], strings.Join(summary, ";")})
-	}
-	return &SwagRouter{engine: s, group: g}
 }
 
 func (s *Swagger) AddPath(basePkg, route, ms, summary, desc string, params []*Param, body interface{}, data interface{}) {

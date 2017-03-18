@@ -1,4 +1,4 @@
-package swagger
+package core
 
 type Tag struct {
 	Name        string `json:"name,omitempty"`

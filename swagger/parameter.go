@@ -1,4 +1,4 @@
-package swagger
+package core
 
 type Param struct {
 	In            string `json:"in,omitempty"`

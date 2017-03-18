@@ -1,4 +1,4 @@
-package swagger
+package core
 
 type Security struct {
 	Type string `json:"type,omitempty"`

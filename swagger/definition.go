@@ -1,4 +1,4 @@
-package swagger
+package core
 
 type Definition struct {
 	Required   []string               `json:"required,omitempty"`
