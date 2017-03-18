@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/fvbock/endless"
 	"github.com/gin-gonic/gin"
@@ -22,6 +23,11 @@ type ISwagRouter interface {
 
 type IBind interface {
 	Bind(g ISwagRouter, model IModel)
+}
+
+func Today() time.Time {
+	now := time.Now()
+	return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 }
 
 var (
