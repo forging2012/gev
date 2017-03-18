@@ -20,6 +20,10 @@ type ISwagRouter interface {
 	swaggin.ISwagRouter
 }
 
+type IBind interface {
+	Bind(g ISwagRouter, model IModel)
+}
+
 var (
 	Db, _ = xorm.NewEngine("mysql", "root:199337@/youyue?parseTime=true&loc=Asia%2FShanghai")
 	App   = gin.New()
