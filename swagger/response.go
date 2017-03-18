@@ -1,4 +1,4 @@
-package swagger
+package core
 
 type Response struct {
 	Description string      `json:"description,omitempty"`

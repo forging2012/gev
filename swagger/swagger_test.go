@@ -1,4 +1,4 @@
-package swagger
+package core
 
 import (
 	"testing"
