@@ -43,11 +43,11 @@ var (
 
 type RouterGroup gin.RouterGroup
 
-func (r *RouterGroup) Bind(model IModel) {
+func (r *RouterGroup) Bind(model IBind) {
 	model.Bind(swaggin.NewRouter((*gin.RouterGroup)(r)), nil)
 }
 
-func Bind(prefix string, model IModel, summary ...string) {
+func Bind(prefix string, model IBind, summary ...string) {
 	pbd := swaggin.NewRouter(App.Group(prefix), summary...)
 	model.Bind(pbd, nil)
 }
