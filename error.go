@@ -1,43 +1,25 @@
 package gev
 
-import (
-	"errors"
+import "github.com/gin-gonic/gin"
 
-	"github.com/gin-gonic/gin"
-)
+var err_hander IErrorHander = new(ErrorHander)
 
-type iApiError interface {
-	error
-	Code() int
+// 处理错误接口
+type IErrorHander interface {
+	Ok(c *gin.Context, data interface{})
+	Err(c *gin.Context, code int, err error)
+	Api(c *gin.Context, data interface{}, err error)
 }
 
-type apiError struct {
-	code int
-	msg  string
-}
+type ErrorHander int
 
-func (this *apiError) Error() string {
-	return this.msg
-}
-
-func (this *apiError) Code() int {
-	return this.code
-}
-
-func Err(code int, msg string) error {
-	e := new(apiError)
-	e.code = code
-	e.msg = msg
-	return e
-}
-
-func respOk(c *gin.Context, data interface{}) {
+func (this *ErrorHander) Ok(c *gin.Context, data interface{}) {
 	if data != nil {
 		c.IndentedJSON(200, gin.H{"code": 0, "data": data})
 	}
 }
 
-func respErr(c *gin.Context, code int, err error) {
+func (this *ErrorHander) Err(c *gin.Context, code int, err error) {
 	msg := err.Error()
 	if code == 0 {
 		table := str2bytes(msg)
@@ -53,23 +35,45 @@ func respErr(c *gin.Context, code int, err error) {
 	c.IndentedJSON(200, gin.H{"code": code, "msg": msg})
 }
 
-func respApi(c *gin.Context, data interface{}, err error) {
+func (this *ErrorHander) Api(c *gin.Context, data interface{}, err error) {
 	if err != nil {
 		if v, ok := err.(iApiError); ok {
-			respErr(c, v.Code(), err)
+			this.Err(c, v.Code(), err)
 		} else {
-			respErr(c, 0, err)
+			this.Err(c, 0, err)
 		}
 		return
 	}
-	respOk(c, data)
+	this.Ok(c, data)
 }
 
-func NeedAuth(c *gin.Context) (interface{}, bool) {
-	if user, ok := c.Get("user"); ok {
-		return user, true
-	} else {
-		respErr(c, 1255, errors.New("需要登录"))
-		return nil, false
-	}
+// 错误码接口
+type iApiError interface {
+	error
+	Code() int
+}
+
+// 错误结构
+type apiError struct {
+	code int
+	msg  string
+}
+
+func (this *apiError) Error() string {
+	return this.msg
+}
+
+func (this *apiError) Code() int {
+	return this.code
+}
+
+func Error(code int, msg string) error {
+	e := new(apiError)
+	e.code = code
+	e.msg = msg
+	return e
+}
+
+func SetErrorHander(eh IErrorHander) {
+	err_hander = eh
 }

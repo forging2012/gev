@@ -130,7 +130,7 @@ func newJsonCall(t reflect.Type) paramLoader {
 		if err := ctx.BindJSON(v.Interface()); err == nil {
 			return v.Elem()
 		} else {
-			panic(err)
+			return reflect.New(t.Elem())
 		}
 	}
 }

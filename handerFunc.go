@@ -47,9 +47,9 @@ func makeHandlerFunc(m *Method, call []paramLoader) gin.HandlerFunc {
 		data := out[0].Interface()
 		err := out[1].Interface()
 		if err == nil {
-			respOk(ctx, data)
+			err_hander.Ok(ctx, data)
 		} else {
-			respApi(ctx, data, err.(error))
+			err_hander.Api(ctx, data, err.(error))
 		}
 	}
 }

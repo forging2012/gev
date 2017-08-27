@@ -60,9 +60,9 @@ func AutoRestart() {
 func stack() []byte {
 	buf := make([]byte, 10240)
 	n := runtime.Stack(buf, false)
-	if n > 627 {
-		copy(buf, buf[627:n])
-		return buf[:n-627]
+	if n > 710 {
+		copy(buf, buf[710:n])
+		return buf[:n-710]
 	}
 	return buf[:n]
 }
