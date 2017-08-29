@@ -120,7 +120,7 @@ func newQueryFloat64(index string) paramLoader {
 }
 func newMultiFile(index string) paramLoader {
 	return func(ctx *gin.Context) reflect.Value {
-		_, header, _ := ctx.Request.FormFile("file")
+		_, header, _ := ctx.Request.FormFile(index)
 		return reflect.ValueOf(header)
 	}
 }
